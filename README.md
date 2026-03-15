@@ -211,7 +211,7 @@ DB_URI = "postgresql+psycopg2://user:password@localhost:5432/your_database"
 
 **2. Add a semantic metadata file** (optional but recommended)
 
-Copy `mcp_sql_server/singtel_semantic_meta.json` as a template. The `entities` array gives each table a plain-English `display_name` and `description` that the agent uses to write better queries. The `metrics` array defines common KPI formulas. The `ai_instructions` field gives the agent star-schema join hints.
+Copy `mcp_sql_server/demo_semantic_meta.json` as a template. The `entities` array gives each table a plain-English `display_name` and `description` that the agent uses to write better queries. The `metrics` array defines common KPI formulas. The `ai_instructions` field gives the agent star-schema join hints.
 
 ```json
 {
@@ -458,5 +458,5 @@ rendara/
     ├── agent.py                # LangGraph ReAct agent + SQLDatabaseToolkit
     ├── safety.py               # SELECT-only guard + row-limit enforcement
     ├── semantic_meta.py        # Static schema loader + live column type enrichment
-    └── singtel_semantic_meta.json  # Example semantic model (Singtel prepaid data)
+    └── demo_semantic_meta.json     # Example semantic model (swap in your own)
 ```

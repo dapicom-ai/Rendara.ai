@@ -9,18 +9,18 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langgraph.prebuilt import create_react_agent
 
 DB_URI = "postgresql+psycopg2://rendara:rendara123@localhost:5432/telco_lakehouse"
-META_FILE = Path(__file__).parent / "singtel_semantic_meta.json"
+META_FILE = Path(__file__).parent / "demo_semantic_meta.json"
 
 
 def _build_schema_context() -> str:
     """
-    Build a compact schema string from singtel_semantic_meta.json.
+    Build a compact schema string from demo_semantic_meta.json.
     Embeds this directly into the system prompt so the agent never needs
     to call sql_db_list_tables or sql_db_schema — saving 2 LLM round-trips.
     """
     meta = json.loads(META_FILE.read_text())
     model = meta["models"][0]
-    lines = ["=" * 60, "DATABASE SCHEMA: Singtel Singapore Prepaid Analytics", "=" * 60]
+    lines = ["=" * 60, f"DATABASE SCHEMA: {model['model_name']}", "=" * 60]
 
     for entity in model["entities"]:
         table = entity["table_name"]
@@ -59,7 +59,7 @@ def _build_schema_context() -> str:
 # Build schema once at module load — not per request
 _SCHEMA_CONTEXT = _build_schema_context()
 
-SYSTEM_PROMPT = f"""You are an expert SQL analyst for the Singtel Singapore prepaid analytics warehouse.
+SYSTEM_PROMPT = f"""You are an expert SQL analyst for the connected data warehouse.
 The complete schema is provided below — do NOT call any schema discovery tools.
 
 {_SCHEMA_CONTEXT}

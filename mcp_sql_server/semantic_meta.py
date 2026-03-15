@@ -1,12 +1,12 @@
 """
 Semantic metadata loader for the LangGraph MCP server.
-Reads singtel_semantic_meta.json and optionally enriches with live column types.
+Reads demo_semantic_meta.json and optionally enriches with live column types.
 """
 import json
 import asyncpg
 from pathlib import Path
 
-META_FILE = Path(__file__).parent / "singtel_semantic_meta.json"
+META_FILE = Path(__file__).parent / "demo_semantic_meta.json"
 PG_DSN = "postgresql://rendara:rendara123@localhost:5432/telco_lakehouse"
 
 

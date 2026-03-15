@@ -1,7 +1,7 @@
 {
   "models": [{
-    "model_id": "singtel_prepaid",
-    "model_name": "Singtel Singapore Prepaid Analytics",
+    "model_id": "demo_data",
+    "model_name": "Demo Prepaid Analytics",
     "entities": [
       {
         "table_name": "dim_customer",
@@ -20,8 +20,8 @@
           {"column_name": "planning_area", "description": "URA planning area (sub-region), more granular than region"},
           {"column_name": "postal_code", "description": "6-digit Singapore postal code for the customer's registered address"},
           {"column_name": "housing_type", "description": "Type of residence, e.g. HDB 3-Room, Condo, Landed — proxy for socioeconomic status"},
-          {"column_name": "tenure_years", "description": "Number of years the customer has been a Singtel subscriber"},
-          {"column_name": "registration_date", "description": "Date the customer first registered as a Singtel prepaid subscriber"},
+          {"column_name": "tenure_years", "description": "Number of years the customer has been a Demo Operator subscriber"},
+          {"column_name": "registration_date", "description": "Date the customer first registered as a Demo Operator prepaid subscriber"},
           {"column_name": "account_status", "description": "Current account state: Active, Suspended, or Terminated"},
           {"column_name": "net_promoter_score", "description": "Last recorded NPS survey response (0–10); higher = more likely to recommend"},
           {"column_name": "estimated_lifetime_value_sgd", "description": "Model-estimated total revenue this customer will generate over their lifetime, in SGD"},
@@ -53,7 +53,7 @@
       {
         "table_name": "dim_plan",
         "display_name": "Plan Dimension",
-        "description": "Catalogue of all Singtel prepaid plans. Each row defines the commercial terms of one plan offering.",
+        "description": "Catalogue of all Demo Operator prepaid plans. Each row defines the commercial terms of one plan offering.",
         "columns": [
           {"column_name": "plan_id", "description": "Surrogate integer key — use for joins to fact tables"},
           {"column_name": "plan_key", "description": "Business-level plan code, e.g. PREP-5G-UNL-S"},
@@ -76,15 +76,15 @@
       {
         "table_name": "dim_channel",
         "display_name": "Channel Dimension",
-        "description": "Sales and service channels through which customers interact with Singtel, e.g. app, store, or online portal.",
+        "description": "Sales and service channels through which customers interact with Demo Operator, e.g. app, store, or online portal.",
         "columns": [
           {"column_name": "channel_id", "description": "Surrogate integer key — use for joins to fact tables"},
           {"column_name": "channel_key", "description": "Short business code identifying the channel, e.g. CHAN-APP"},
-          {"column_name": "channel_name", "description": "Full descriptive name of the channel, e.g. MySingtel App"},
+          {"column_name": "channel_name", "description": "Full descriptive name of the channel, e.g. MyDemo Operator App"},
           {"column_name": "channel_type", "description": "Broad channel category: Digital, Retail, or Customer Service"},
           {"column_name": "channel_medium", "description": "Specific medium within the type, e.g. Mobile App, Physical Store, Phone"},
           {"column_name": "is_digital", "description": "True if the channel is entirely digital (no in-person interaction required)"},
-          {"column_name": "is_singtel_owned", "description": "True if the channel is a first-party Singtel channel, false for authorised resellers"}
+          {"column_name": "is_operator_owned", "description": "True if the channel is a first-party channel, false for authorised resellers"}
         ]
       },
       {
@@ -116,7 +116,7 @@
       {
         "table_name": "dim_campaign",
         "display_name": "Campaign Dimension",
-        "description": "Retention and acquisition campaigns run by Singtel, with details on offer terms and target segments.",
+        "description": "Retention and acquisition campaigns run by Demo Operator, with details on offer terms and target segments.",
         "columns": [
           {"column_name": "campaign_id", "description": "Surrogate integer key — use for joins to fact_campaign_enrollment"},
           {"column_name": "campaign_key", "description": "Business campaign code used in operational systems"},
@@ -161,7 +161,7 @@
           {"column_name": "total_recharged_sgd", "description": "Total value recharged by the customer during the month, in SGD"},
           {"column_name": "avg_daily_data_sessions", "description": "Average number of mobile data sessions per day in the month"},
           {"column_name": "avg_session_duration_minutes", "description": "Average length of a data session in minutes during the month"},
-          {"column_name": "my_singtel_app_launches", "description": "Number of times the customer opened the MySingtel app during the month — engagement signal"},
+          {"column_name": "my_operator_app_launches", "description": "Number of times the customer opened the MyDemo Operator app during the month — engagement signal"},
           {"column_name": "days_since_last_recharge", "description": "Number of days between the last recharge and the end of the month — churn risk signal"},
           {"column_name": "customer_support_contacts", "description": "Number of times the customer contacted support during the month"},
           {"column_name": "had_complaint_this_month", "description": "True if the customer lodged at least one formal complaint during the month"},

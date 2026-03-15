@@ -13,7 +13,7 @@ PG_DSN = "postgresql://rendara:rendara123@localhost:5432/telco_lakehouse"
 
 _port = int(os.environ.get("MCP_PORT", "8001"))
 mcp = FastMCP(
-    "Singtel Prepaid Analytics",
+    "SQL Analytics (Demo)",
     host="0.0.0.0",
     port=_port,
     message_path="/message",

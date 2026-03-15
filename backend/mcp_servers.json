@@ -1,8 +1,8 @@
 [
   {
-    "name": "Singtel Prepaid Analytics",
+    "name": "SQL Analytics (Demo)",
     "type": "sse",
     "endpoint": "http://localhost:8001/sse",
-    "description": "Singtel Singapore prepaid data warehouse — star schema, 3,000 customers, 18-month churn prediction, campaign analytics"
+    "description": "Demo prepaid data warehouse (model_id: demo_data) — star schema with customer, plan, recharge, usage, churn prediction, and campaign tables"
   }
 ]

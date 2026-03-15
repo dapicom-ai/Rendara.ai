@@ -1,7 +1,7 @@
 """
-Singtel Singapore Prepaid Data Warehouse — Comprehensive Seed Script
+Demo Prepaid Data Warehouse — Comprehensive Seed Script
 Star-schema dimensional model with 12 months historical + 6 months churn forecast.
-Run: python backend/seed_singtel_data.py
+Run: python backend/seed_demo_data.py
 """
 
 import os
@@ -23,7 +23,7 @@ DATA_END     = date(2025, 12, 31)
 FUTURE_END   = date(2026, 6, 30)   # 6 months of churn forecasts
 N_CUSTOMERS  = 3000
 
-# ── Singtel Singapore prepaid plan catalogue ──────────────────────────────────
+# ── Demo prepaid plan catalogue ──────────────────────────────────
 PLANS = [
     # plan_key, plan_name, tier, technology, monthly_fee_sgd, data_gb, voice_minutes, sms_included, validity_days, is_5g, target_segment
     ("hiSIM_starter",   "hi! SIM Starter",          "entry",    "4G",  5,  1,   0,    0,   28, False, "cost_conscious"),
@@ -45,15 +45,15 @@ PLANS = [
 ]
 
 CHANNELS = [
-    ("singtel_shop",    "Singtel Official Shop",     "retail",   "offline"),
-    ("singtel_online",  "Singtel Website",           "direct",   "online"),
-    ("singtel_app",     "My Singtel App",            "direct",   "mobile"),
+    ("operator_shop",    "Operator Official Shop",     "retail",   "offline"),
+    ("operator_online",  "Operator Website",           "direct",   "online"),
+    ("operator_app",     "My Operator App",            "direct",   "mobile"),
     ("cheers_7eleven",  "Cheers / 7-Eleven",         "partner",  "offline"),
     ("challenger",      "Challenger Electronics",    "partner",  "offline"),
     ("courts",          "Courts Singapore",          "partner",  "offline"),
     ("lazada",          "Lazada",                    "marketplace","online"),
     ("shopee",          "Shopee",                    "marketplace","online"),
-    ("telesales",       "Singtel Telesales",         "direct",   "phone"),
+    ("telesales",       "Operator Telesales",         "direct",   "phone"),
     ("corporate_desk",  "Corporate Service Desk",    "b2b",      "offline"),
 ]
 
@@ -156,7 +156,7 @@ def build_customers(n):
         nps_score   = max(0, min(10, int(random.gauss(7, 2))))
         lifetime_val= round(random.uniform(50, 2000), 2)
         is_active   = random.random() > 0.08   # 8% already churned before period
-        preferred_ch= random.choice(["singtel_app", "singtel_online", "singtel_shop", "cheers_7eleven"])
+        preferred_ch= random.choice(["operator_app", "operator_online", "operator_shop", "cheers_7eleven"])
 
         rows.append((
             i, gen_sg_mobile(), name, gender, ethnicity, age, age_band, segment,
@@ -639,12 +639,12 @@ def run():
             channel_type           VARCHAR(20),  -- retail / direct / partner / marketplace / b2b
             channel_medium         VARCHAR(10),  -- offline / online / mobile / phone
             is_digital             BOOLEAN,
-            is_singtel_owned       BOOLEAN
+            is_operator_owned       BOOLEAN
         );
     """)
     execute_values(cur, """
         INSERT INTO dim_channel (channel_key,channel_name,channel_type,channel_medium,
-                                  is_digital,is_singtel_owned) VALUES %s
+                                  is_digital,is_operator_owned) VALUES %s
     """, [(c[0],c[1],c[2],c[3],c[3] in ("online","mobile"),c[2]=="direct") for c in CHANNELS])
     conn.commit()
 
@@ -807,7 +807,7 @@ def run():
             -- Engagement
             avg_daily_data_sessions        NUMERIC(5,1),
             avg_session_duration_minutes   NUMERIC(5,1),
-            my_singtel_app_launches        INTEGER,
+            my_operator_app_launches        INTEGER,
             -- Risk indicators
             days_since_last_recharge       SMALLINT,
             customer_support_contacts      SMALLINT,
@@ -827,7 +827,7 @@ def run():
            base_plan_revenue_sgd,overage_revenue_sgd,roaming_revenue_sgd,
            international_call_revenue_sgd,total_monthly_revenue_sgd,
            recharge_count,total_recharged_sgd,
-           avg_daily_data_sessions,avg_session_duration_minutes,my_singtel_app_launches,
+           avg_daily_data_sessions,avg_session_duration_minutes,my_operator_app_launches,
            days_since_last_recharge,customer_support_contacts,
            had_complaint_this_month,competitor_inquiry_detected,
            plan_changed_this_month,customer_churned_this_month)
@@ -947,7 +947,7 @@ def run():
 
     cur.close()
     conn.close()
-    print("\nDone. Singtel prepaid data warehouse is ready.")
+    print("\nDone. Demo prepaid data warehouse is ready.")
 
 if __name__ == "__main__":
     run()

@@ -276,7 +276,7 @@ const allFixtures: { name: string; spec: VizSpec; height?: number }[] = [
 
 export default function VizTestPage() {
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-10">
+    <div className="p-6 max-w-6xl mx-auto space-y-10 h-full overflow-y-auto">
       <div>
         <h1 className="text-2xl font-bold text-white mb-1">Visualization Test Page</h1>
         <p className="text-sm text-muted-foreground">

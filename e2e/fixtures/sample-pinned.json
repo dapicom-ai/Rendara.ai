@@ -1,0 +1,5 @@
+{
+  "title": "Test Pinned Response",
+  "description": "A test pinned response for E2E tests.",
+  "content_json": [{ "type": "viz_chart", "data": {} }]
+}

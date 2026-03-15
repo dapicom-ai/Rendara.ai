@@ -1,0 +1,300 @@
+{
+  "models": [{
+    "model_id": "singtel_prepaid",
+    "model_name": "Singtel Singapore Prepaid Analytics",
+    "entities": [
+      {
+        "table_name": "dim_customer",
+        "display_name": "Customer Dimension",
+        "description": "One row per prepaid subscriber. Contains demographic, geographic, and account attributes that describe each customer.",
+        "columns": [
+          {"column_name": "customer_id", "description": "Surrogate integer key — use for all joins to fact tables"},
+          {"column_name": "mobile_number", "description": "Masked mobile number uniquely identifying the subscriber"},
+          {"column_name": "first_name", "description": "Customer's first name (anonymised for analytics use)"},
+          {"column_name": "gender", "description": "Customer gender: Male, Female, or Other"},
+          {"column_name": "ethnicity", "description": "Ethnic group of the customer, aligned to Singapore census categories"},
+          {"column_name": "age_years", "description": "Customer age in whole years at time of registration"},
+          {"column_name": "age_band", "description": "Age group bucket, e.g. 18-24, 25-34, useful for segment-level analysis"},
+          {"column_name": "customer_segment", "description": "Business-defined value segment: e.g. High Value, Standard, Youth, Senior"},
+          {"column_name": "region", "description": "Geographic region of Singapore where the customer resides, e.g. Central, East, West"},
+          {"column_name": "planning_area", "description": "URA planning area (sub-region), more granular than region"},
+          {"column_name": "postal_code", "description": "6-digit Singapore postal code for the customer's registered address"},
+          {"column_name": "housing_type", "description": "Type of residence, e.g. HDB 3-Room, Condo, Landed — proxy for socioeconomic status"},
+          {"column_name": "tenure_years", "description": "Number of years the customer has been a Singtel subscriber"},
+          {"column_name": "registration_date", "description": "Date the customer first registered as a Singtel prepaid subscriber"},
+          {"column_name": "account_status", "description": "Current account state: Active, Suspended, or Terminated"},
+          {"column_name": "net_promoter_score", "description": "Last recorded NPS survey response (0–10); higher = more likely to recommend"},
+          {"column_name": "estimated_lifetime_value_sgd", "description": "Model-estimated total revenue this customer will generate over their lifetime, in SGD"},
+          {"column_name": "preferred_contact_channel", "description": "Customer's stated preference for being contacted, e.g. SMS, Email, App Push"}
+        ]
+      },
+      {
+        "table_name": "dim_date",
+        "display_name": "Date Dimension",
+        "description": "Standard calendar dimension covering every date in the dataset period. Use for time-based filtering and aggregation.",
+        "columns": [
+          {"column_name": "calendar_date", "description": "The actual calendar date — primary key and join key for all time-based lookups"},
+          {"column_name": "year", "description": "Four-digit calendar year, e.g. 2025"},
+          {"column_name": "month_number", "description": "Month of year as integer 1–12"},
+          {"column_name": "day_of_month", "description": "Day within the month as integer 1–31"},
+          {"column_name": "month_name", "description": "Full month name, e.g. January"},
+          {"column_name": "month_short", "description": "Three-letter month abbreviation, e.g. Jan"},
+          {"column_name": "quarter_number", "description": "Calendar quarter as integer 1–4"},
+          {"column_name": "quarter_label", "description": "Quarter label string, e.g. Q1 2025"},
+          {"column_name": "iso_week_number", "description": "ISO 8601 week number within the year (1–53)"},
+          {"column_name": "day_name", "description": "Full day-of-week name, e.g. Monday"},
+          {"column_name": "day_short", "description": "Three-letter day abbreviation, e.g. Mon"},
+          {"column_name": "is_weekend", "description": "True if the date falls on a Saturday or Sunday"},
+          {"column_name": "is_singapore_public_holiday", "description": "True if the date is a Singapore gazetted public holiday"},
+          {"column_name": "is_non_working_day", "description": "True if the date is a weekend or public holiday — useful for behavioural analysis"},
+          {"column_name": "day_sequence_in_dataset", "description": "Sequential integer day count from the first date in the dataset, useful for trend indexing"}
+        ]
+      },
+      {
+        "table_name": "dim_plan",
+        "display_name": "Plan Dimension",
+        "description": "Catalogue of all Singtel prepaid plans. Each row defines the commercial terms of one plan offering.",
+        "columns": [
+          {"column_name": "plan_id", "description": "Surrogate integer key — use for joins to fact tables"},
+          {"column_name": "plan_key", "description": "Business-level plan code, e.g. PREP-5G-UNL-S"},
+          {"column_name": "plan_name", "description": "Human-readable plan name shown in marketing and the app"},
+          {"column_name": "plan_tier", "description": "Commercial tier of the plan: Basic, Standard, Premium, or Unlimited"},
+          {"column_name": "technology", "description": "Network technology the plan is designed for: 4G or 5G"},
+          {"column_name": "monthly_fee_sgd", "description": "Base monthly subscription fee charged to the customer, in SGD"},
+          {"column_name": "data_allowance_gb", "description": "Included monthly data allowance in gigabytes; null for unlimited plans"},
+          {"column_name": "is_unlimited_data", "description": "True if the plan includes unlimited data with no hard cap"},
+          {"column_name": "included_voice_minutes", "description": "Number of local voice minutes bundled in the plan per month"},
+          {"column_name": "included_sms", "description": "Number of local SMS messages bundled in the plan per month"},
+          {"column_name": "validity_days", "description": "Plan validity period in days before renewal is required"},
+          {"column_name": "is_5g_plan", "description": "True if the plan grants access to the 5G network"},
+          {"column_name": "target_customer_segment", "description": "The customer segment this plan is primarily marketed to, e.g. Youth, Senior"},
+          {"column_name": "overage_rate_sgd_per_gb", "description": "Rate charged per GB of data consumed beyond the plan allowance, in SGD"},
+          {"column_name": "roaming_enabled", "description": "True if international data roaming is available on this plan"},
+          {"column_name": "is_active_in_catalogue", "description": "True if the plan is currently available for new subscriptions"}
+        ]
+      },
+      {
+        "table_name": "dim_channel",
+        "display_name": "Channel Dimension",
+        "description": "Sales and service channels through which customers interact with Singtel, e.g. app, store, or online portal.",
+        "columns": [
+          {"column_name": "channel_id", "description": "Surrogate integer key — use for joins to fact tables"},
+          {"column_name": "channel_key", "description": "Short business code identifying the channel, e.g. CHAN-APP"},
+          {"column_name": "channel_name", "description": "Full descriptive name of the channel, e.g. MySingtel App"},
+          {"column_name": "channel_type", "description": "Broad channel category: Digital, Retail, or Customer Service"},
+          {"column_name": "channel_medium", "description": "Specific medium within the type, e.g. Mobile App, Physical Store, Phone"},
+          {"column_name": "is_digital", "description": "True if the channel is entirely digital (no in-person interaction required)"},
+          {"column_name": "is_singtel_owned", "description": "True if the channel is a first-party Singtel channel, false for authorised resellers"}
+        ]
+      },
+      {
+        "table_name": "dim_device",
+        "display_name": "Device Dimension",
+        "description": "Catalogue of mobile devices observed in the network, capturing hardware characteristics used by customers.",
+        "columns": [
+          {"column_name": "device_id", "description": "Surrogate integer key — use for joins to fact tables"},
+          {"column_name": "brand", "description": "Device manufacturer brand, e.g. Apple, Samsung, Xiaomi"},
+          {"column_name": "model_name", "description": "Specific device model name, e.g. iPhone 15 Pro"},
+          {"column_name": "operating_system", "description": "Mobile OS on the device: iOS or Android"},
+          {"column_name": "device_category", "description": "Form factor category: Smartphone, Tablet, or Mobile Broadband"},
+          {"column_name": "is_5g_capable", "description": "True if the device supports 5G connectivity"},
+          {"column_name": "release_year", "description": "Calendar year the device model was commercially released"}
+        ]
+      },
+      {
+        "table_name": "dim_location",
+        "display_name": "Location Dimension",
+        "description": "Geographic dimension covering Singapore planning areas with regional and urban classification attributes.",
+        "columns": [
+          {"column_name": "location_id", "description": "Surrogate integer key for the planning area"},
+          {"column_name": "planning_area", "description": "URA planning area name — joins to dim_customer.planning_area for spatial analysis"},
+          {"column_name": "region", "description": "Broader geographic region grouping the planning area: Central, North, South, East, or West"},
+          {"column_name": "is_central_business_district", "description": "True if the planning area is within the Singapore CBD boundary"},
+          {"column_name": "typical_housing_type", "description": "Most prevalent housing type in the planning area, giving a neighbourhood-level socioeconomic proxy"}
+        ]
+      },
+      {
+        "table_name": "dim_campaign",
+        "display_name": "Campaign Dimension",
+        "description": "Retention and acquisition campaigns run by Singtel, with details on offer terms and target segments.",
+        "columns": [
+          {"column_name": "campaign_id", "description": "Surrogate integer key — use for joins to fact_campaign_enrollment"},
+          {"column_name": "campaign_key", "description": "Business campaign code used in operational systems"},
+          {"column_name": "campaign_name", "description": "Descriptive name of the campaign, e.g. Q1 2025 Churn Win-Back"},
+          {"column_name": "campaign_type", "description": "Campaign objective: Retention, Upsell, Win-Back, or Acquisition"},
+          {"column_name": "campaign_start_date", "description": "Date from which the campaign offer is valid and being promoted"},
+          {"column_name": "campaign_end_date", "description": "Date after which the campaign offer expires"},
+          {"column_name": "target_customer_segment", "description": "Customer segment the campaign is targeted at, e.g. High Churn Risk"},
+          {"column_name": "offer_description", "description": "Plain-text description of the offer presented to the customer"},
+          {"column_name": "discount_percentage", "description": "Percentage discount applied to the plan fee if the customer accepts the offer"},
+          {"column_name": "data_bonus_gb", "description": "Additional data in GB awarded to the customer upon accepting the offer"},
+          {"column_name": "expected_reach", "description": "Estimated number of customers the campaign will be presented to"},
+          {"column_name": "estimated_cost_sgd", "description": "Projected total cost of running the campaign, in SGD"}
+        ]
+      },
+      {
+        "table_name": "fact_monthly_customer_metrics",
+        "display_name": "Monthly Customer Metrics (Fact)",
+        "description": "Core monthly fact table: one row per customer per month. Contains all KPIs for revenue, usage, engagement, and churn for each billing period.",
+        "columns": [
+          {"column_name": "metric_id", "description": "Surrogate integer primary key for this monthly metric record"},
+          {"column_name": "customer_id", "description": "FK to dim_customer.customer_id — identifies the subscriber"},
+          {"column_name": "plan_id", "description": "FK to dim_plan.plan_id — the plan active for this customer during the month"},
+          {"column_name": "next_month_plan_id", "description": "FK to dim_plan.plan_id — the plan the customer moved to the following month; null if unchanged"},
+          {"column_name": "month_start_date", "description": "First day of the billing month — use for time-series joins to dim_date"},
+          {"column_name": "month_number", "description": "Month of year as integer 1–12"},
+          {"column_name": "year", "description": "Four-digit calendar year for the billing month"},
+          {"column_name": "data_used_mb", "description": "Total mobile data consumed by the customer during the month, in megabytes"},
+          {"column_name": "data_allowance_mb", "description": "Total data allowance for the month in megabytes, derived from the active plan"},
+          {"column_name": "data_utilisation_pct", "description": "Percentage of data allowance used: (data_used_mb / data_allowance_mb) * 100"},
+          {"column_name": "data_overage_gb", "description": "Data consumed beyond the plan allowance in GB; 0 if within allowance"},
+          {"column_name": "voice_minutes_used", "description": "Total local voice call minutes used by the customer in the month"},
+          {"column_name": "sms_sent", "description": "Total local SMS messages sent by the customer in the month"},
+          {"column_name": "international_call_minutes", "description": "Total international call minutes used by the customer in the month"},
+          {"column_name": "roaming_data_used_mb", "description": "Data used while roaming internationally, in megabytes"},
+          {"column_name": "base_plan_revenue_sgd", "description": "Revenue from the base plan subscription fee for the month, in SGD"},
+          {"column_name": "overage_revenue_sgd", "description": "Revenue from data overage charges for the month, in SGD"},
+          {"column_name": "roaming_revenue_sgd", "description": "Revenue from international roaming data charges for the month, in SGD"},
+          {"column_name": "international_call_revenue_sgd", "description": "Revenue from international call charges for the month, in SGD"},
+          {"column_name": "total_monthly_revenue_sgd", "description": "Total revenue collected from this customer for the month (sum of all revenue components), in SGD"},
+          {"column_name": "recharge_count", "description": "Number of recharge transactions made by the customer during the month"},
+          {"column_name": "total_recharged_sgd", "description": "Total value recharged by the customer during the month, in SGD"},
+          {"column_name": "avg_daily_data_sessions", "description": "Average number of mobile data sessions per day in the month"},
+          {"column_name": "avg_session_duration_minutes", "description": "Average length of a data session in minutes during the month"},
+          {"column_name": "my_singtel_app_launches", "description": "Number of times the customer opened the MySingtel app during the month — engagement signal"},
+          {"column_name": "days_since_last_recharge", "description": "Number of days between the last recharge and the end of the month — churn risk signal"},
+          {"column_name": "customer_support_contacts", "description": "Number of times the customer contacted support during the month"},
+          {"column_name": "had_complaint_this_month", "description": "True if the customer lodged at least one formal complaint during the month"},
+          {"column_name": "competitor_inquiry_detected", "description": "True if a competitor enquiry signal was detected for this customer (e.g. MNP query)"},
+          {"column_name": "plan_changed_this_month", "description": "True if the customer switched to a different plan during this month"},
+          {"column_name": "customer_churned_this_month", "description": "True if the customer churned (terminated their subscription) during this month — primary churn indicator"}
+        ]
+      },
+      {
+        "table_name": "fact_recharge_transaction",
+        "display_name": "Recharge Transactions (Fact)",
+        "description": "Individual prepaid recharge events. Each row represents one top-up transaction, capturing amount, channel, and payment method.",
+        "columns": [
+          {"column_name": "transaction_id", "description": "Surrogate integer primary key for the recharge transaction"},
+          {"column_name": "customer_id", "description": "FK to dim_customer.customer_id — identifies which customer recharged"},
+          {"column_name": "transaction_date", "description": "Date the recharge transaction was completed"},
+          {"column_name": "recharge_amount_sgd", "description": "Value of the recharge top-up in SGD"},
+          {"column_name": "payment_method", "description": "Payment method used: Credit Card, PayNow, PayLah, Cash, etc."},
+          {"column_name": "plan_id", "description": "FK to dim_plan.plan_id — the plan active at the time of the recharge"},
+          {"column_name": "channel_id", "description": "FK to dim_channel.channel_id — the channel through which the recharge was made"},
+          {"column_name": "is_auto_renewal", "description": "True if the recharge was triggered automatically by an auto-renewal setting"},
+          {"column_name": "transaction_status", "description": "Outcome of the transaction: Completed, Failed, or Reversed"},
+          {"column_name": "was_failed_retry", "description": "True if this transaction was a retry following a previous failed attempt"}
+        ]
+      },
+      {
+        "table_name": "fact_daily_data_usage",
+        "display_name": "Daily Data Usage (Fact)",
+        "description": "Granular daily network usage records per customer. Useful for spotting usage patterns, peak hours, and app category trends.",
+        "columns": [
+          {"column_name": "usage_id", "description": "Surrogate integer primary key for this daily usage record"},
+          {"column_name": "customer_id", "description": "FK to dim_customer.customer_id — identifies the subscriber"},
+          {"column_name": "usage_date", "description": "The calendar date for this usage record — joins to dim_date.calendar_date"},
+          {"column_name": "total_data_used_mb", "description": "Total mobile data consumed by the customer on this day, in megabytes"},
+          {"column_name": "number_of_sessions", "description": "Number of distinct data sessions recorded for this customer on this day"},
+          {"column_name": "peak_usage_hour", "description": "Hour of the day (0–23) when the customer consumed the most data"},
+          {"column_name": "top_app_category", "description": "App category consuming the most data on this day, e.g. Video Streaming, Social Media, Gaming"},
+          {"column_name": "top_app_data_used_mb", "description": "Data consumed by the top app category on this day, in megabytes"},
+          {"column_name": "network_technology", "description": "Primary network technology used on this day: 4G or 5G"},
+          {"column_name": "signal_quality", "description": "Predominant signal quality experienced by the customer: Excellent, Good, Fair, or Poor"}
+        ]
+      },
+      {
+        "table_name": "fact_plan_subscription",
+        "display_name": "Plan Subscription History (Fact)",
+        "description": "Historical record of plan subscriptions per customer. Tracks plan changes over time, effective dates, and reasons for switching.",
+        "columns": [
+          {"column_name": "subscription_id", "description": "Surrogate integer primary key for this subscription event"},
+          {"column_name": "customer_id", "description": "FK to dim_customer.customer_id — identifies the subscriber"},
+          {"column_name": "plan_id", "description": "FK to dim_plan.plan_id — the plan the customer subscribed to"},
+          {"column_name": "effective_date", "description": "Date from which this plan was active for the customer"},
+          {"column_name": "end_date", "description": "Date the plan subscription ended; null if still active"},
+          {"column_name": "change_reason", "description": "Reason for the plan change, e.g. Upgrade, Downgrade, Promotion, or Churn"},
+          {"column_name": "previous_plan_id", "description": "FK to dim_plan.plan_id — the plan the customer was on before this change; null for initial activations"}
+        ]
+      },
+      {
+        "table_name": "fact_churn_prediction",
+        "display_name": "Churn Predictions (Fact)",
+        "description": "ML model outputs for churn risk per customer per month. Covers both historical actuals (Jan–Dec 2025) and forward-looking forecasts (Jan–Jun 2026).",
+        "columns": [
+          {"column_name": "prediction_id", "description": "Surrogate integer primary key for this prediction record"},
+          {"column_name": "customer_id", "description": "FK to dim_customer.customer_id — identifies the subscriber being scored"},
+          {"column_name": "prediction_month_date", "description": "First day of the month this prediction applies to — join to dim_date.calendar_date"},
+          {"column_name": "prediction_month_label", "description": "Human-readable label for the prediction period, e.g. Jan 2026"},
+          {"column_name": "churn_probability_score", "description": "ML model probability score between 0 and 1; higher means greater likelihood of churning"},
+          {"column_name": "churn_risk_band", "description": "Risk segment derived from the score: low, medium, high, or critical"},
+          {"column_name": "top_churn_driver", "description": "Primary feature driving the churn risk for this customer, e.g. high days_since_last_recharge"},
+          {"column_name": "recommended_retention_action", "description": "Suggested intervention to reduce churn risk, e.g. send data bonus offer"},
+          {"column_name": "is_future_prediction", "description": "False = historical actual (Jan–Dec 2025), true = ML forward forecast (Jan–Jun 2026)"},
+          {"column_name": "actual_customer_churned", "description": "The observed churn outcome for historical periods; null for future predictions"},
+          {"column_name": "model_version", "description": "Version identifier of the ML model that generated this prediction"}
+        ]
+      },
+      {
+        "table_name": "fact_campaign_enrollment",
+        "display_name": "Campaign Enrollments (Fact)",
+        "description": "Records of customers enrolled in retention or acquisition campaigns, with conversion outcomes and incremental revenue impact.",
+        "columns": [
+          {"column_name": "enrollment_id", "description": "Surrogate integer primary key for this campaign enrollment record"},
+          {"column_name": "campaign_id", "description": "FK to dim_campaign.campaign_id — identifies which campaign was offered"},
+          {"column_name": "customer_id", "description": "FK to dim_customer.customer_id — identifies the customer who was contacted"},
+          {"column_name": "enrollment_date", "description": "Date the customer was contacted or enrolled in the campaign"},
+          {"column_name": "contact_channel", "description": "Channel used to reach the customer with the campaign offer, e.g. SMS, Email, App Push"},
+          {"column_name": "customer_accepted_offer", "description": "True if the customer accepted the campaign offer"},
+          {"column_name": "conversion_date", "description": "Date the customer completed the conversion action; null if they did not convert"},
+          {"column_name": "incremental_revenue_sgd", "description": "Additional revenue attributable to this customer accepting the campaign offer, in SGD"},
+          {"column_name": "data_bonus_activated", "description": "True if the data bonus component of the campaign offer was successfully activated for this customer"}
+        ]
+      }
+    ],
+    "relationships": [
+      {"from": "fact_monthly_customer_metrics.customer_id", "to": "dim_customer.customer_id"},
+      {"from": "fact_monthly_customer_metrics.plan_id", "to": "dim_plan.plan_id"},
+      {"from": "fact_monthly_customer_metrics.next_month_plan_id", "to": "dim_plan.plan_id"},
+      {"from": "fact_monthly_customer_metrics.month_start_date", "to": "dim_date.calendar_date"},
+      {"from": "fact_plan_subscription.customer_id", "to": "dim_customer.customer_id"},
+      {"from": "fact_plan_subscription.plan_id", "to": "dim_plan.plan_id"},
+      {"from": "fact_plan_subscription.previous_plan_id", "to": "dim_plan.plan_id"},
+      {"from": "fact_recharge_transaction.customer_id", "to": "dim_customer.customer_id"},
+      {"from": "fact_recharge_transaction.plan_id", "to": "dim_plan.plan_id"},
+      {"from": "fact_recharge_transaction.channel_id", "to": "dim_channel.channel_id"},
+      {"from": "fact_recharge_transaction.transaction_date", "to": "dim_date.calendar_date"},
+      {"from": "fact_daily_data_usage.customer_id", "to": "dim_customer.customer_id"},
+      {"from": "fact_daily_data_usage.usage_date", "to": "dim_date.calendar_date"},
+      {"from": "fact_churn_prediction.customer_id", "to": "dim_customer.customer_id"},
+      {"from": "fact_churn_prediction.prediction_month_date", "to": "dim_date.calendar_date"},
+      {"from": "fact_campaign_enrollment.customer_id", "to": "dim_customer.customer_id"},
+      {"from": "fact_campaign_enrollment.campaign_id", "to": "dim_campaign.campaign_id"},
+      {"from": "dim_customer.planning_area", "to": "dim_location.planning_area"}
+    ],
+    "metrics": [
+      {"name": "ARPU", "expression": "SUM(f.total_monthly_revenue_sgd) / COUNT(DISTINCT f.customer_id)"},
+      {"name": "Monthly Churn Rate %", "expression": "100.0 * SUM(f.customer_churned_this_month::int) / COUNT(DISTINCT f.customer_id)"},
+      {"name": "Annualised Churn %", "expression": "100 * (1 - POWER(1 - monthly_churn_rate/100.0, 12))"},
+      {"name": "CLV (SGD)", "expression": "ARPU / NULLIF(monthly_churn_rate / 100.0, 0)"},
+      {"name": "Net Adds", "expression": "SUM(new_activation::int) - SUM(customer_churned_this_month::int)"},
+      {"name": "Retention Rate %", "expression": "100.0 - Monthly_Churn_Rate"},
+      {"name": "Data Utilisation %", "expression": "100.0 * AVG(data_used_mb::numeric / NULLIF(data_allowance_mb, 0))"},
+      {"name": "Avg Recharge Value (SGD)", "expression": "SUM(recharge_amount_sgd) / COUNT(transaction_id)"},
+      {"name": "Recharge Frequency", "expression": "COUNT(transaction_id) / COUNT(DISTINCT customer_id)"},
+      {"name": "MoM ARPU Growth %", "expression": "100 * (ARPU - LAG(ARPU) OVER (ORDER BY month_start_date)) / NULLIF(LAG(ARPU) OVER (ORDER BY month_start_date), 0)"},
+      {"name": "YTD Revenue (SGD)", "expression": "SUM(total_monthly_revenue_sgd) WHERE EXTRACT(YEAR FROM month_start_date) = target_year"},
+      {"name": "YTD vs Prior Year %", "expression": "100 * (YTD_current - YTD_prior) / NULLIF(YTD_prior, 0)"},
+      {"name": "Revenue Mix by Plan %", "expression": "100 * SUM(plan_revenue) / SUM(total_revenue)"},
+      {"name": "Rolling 3M Avg ARPU", "expression": "AVG(total_monthly_revenue_sgd / active_customers) OVER (ORDER BY month_start_date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)"},
+      {"name": "Near-Limit Rate %", "expression": "100.0 * COUNT(CASE WHEN data_utilisation_pct >= 90 THEN 1 END) / COUNT(*)"},
+      {"name": "MoM Churn Variance (pp)", "expression": "churn_rate_pct - LAG(churn_rate_pct) OVER (ORDER BY prediction_month_date)"},
+      {"name": "At-Risk Revenue (SGD)", "expression": "SUM(f.total_monthly_revenue_sgd) WHERE cp.churn_risk_band IN ('high', 'critical')"},
+      {"name": "Churn Risk Band Distribution", "expression": "COUNT(*) GROUP BY churn_risk_band"},
+      {"name": "Campaign Conversion Rate %", "expression": "100.0 * SUM(customer_accepted_offer::int) / COUNT(enrollment_id)"},
+      {"name": "Avg Days Between Recharges", "expression": "AVG(days_since_last_recharge) across active customers"}
+    ],
+    "ai_instructions": "Star schema — join fact tables to dimensions via integer _id foreign keys (customer_id, plan_id, channel_id, campaign_id). Use dim_date via date column joins (month_start_date, usage_date, transaction_date, prediction_month_date to dim_date.calendar_date). Use fact_monthly_customer_metrics for monthly KPIs (ARPU, churn, data usage). The churn column is customer_churned_this_month (not churned_this_month). The revenue column is total_monthly_revenue_sgd (not monthly_revenue_sgd). Filter actuals: is_future_prediction = false (Jan–Dec 2025). Filter forecasts: is_future_prediction = true (Jan–Jun 2026). Cast to ::numeric before dividing to avoid integer truncation. Use LAG() window functions for MoM variance. For YTD, filter WHERE EXTRACT(YEAR FROM d.calendar_date) = year. Always alias tables: f = fact table, c = dim_customer, d = dim_date, p = dim_plan, ch = dim_channel, cp = fact_churn_prediction. Include a date filter in every query."
+  }]
+}

@@ -1,0 +1,8 @@
+{
+  "title": "Test Story",
+  "slides_json": [
+    { "id": "s1", "title": "Slide One", "content": "Content for slide one." },
+    { "id": "s2", "title": "Slide Two", "content": "Content for slide two." },
+    { "id": "s3", "title": "Slide Three", "content": "Content for slide three." }
+  ]
+}

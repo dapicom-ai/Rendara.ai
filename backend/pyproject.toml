@@ -1,0 +1,17 @@
+[project]
+name = "rendara-backend"
+version = "0.1.0"
+description = "Rendara — FastAPI backend for the Business Data Analysis Agent"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "mcp",
+    "httpx",
+    "python-dotenv",
+    "pydantic",
+]
+
+[build-system]
+requires = ["setuptools>=67"]
+build-backend = "setuptools.backends.legacy:build"

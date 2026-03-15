@@ -1,0 +1,7 @@
+{
+  "title": "Test Dashboard",
+  "layout_json": [
+    { "id": "tile-1", "type": "text", "content": "Hello from tile 1", "x": 5, "y": 5, "w": 40, "h": 45 },
+    { "id": "tile-2", "type": "text", "content": "Hello from tile 2", "x": 55, "y": 5, "w": 40, "h": 45 }
+  ]
+}

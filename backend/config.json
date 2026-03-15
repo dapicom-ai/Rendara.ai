@@ -1,0 +1,16 @@
+{
+  "llm": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "max_tokens": 4096,
+    "temperature": 0.3,
+    "max_tool_rounds": 10,
+    "request_timeout_seconds": 120
+  },
+  "mcp": {
+    "tool_timeout_seconds": 120,
+    "round_timeout_seconds": 180
+  },
+  "database": {
+    "path": "./demo.db"
+  }
+}

@@ -39,3 +39,25 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env
+backend/demo.db
+
+# Screenshots and test artifacts
+*.png
+*.jpg
+!public/**/*.jpg
+!public/**/*.png
+test-results/
+test-screenshots/
+playwright-report/
+.playwright-mcp/
+
+# Database
+demo.db
+
+# Debug scripts
+*.js
+!next.config.js
+
+# Misc
+network-test.txt

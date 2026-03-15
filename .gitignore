@@ -59,5 +59,12 @@ demo.db
 *.js
 !next.config.js
 
+# Python
+__pycache__/
+*.pyc
+
+# Claude Code
+.claude/
+
 # Misc
 network-test.txt

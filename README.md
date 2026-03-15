@@ -321,9 +321,9 @@ List as many servers as you like — Rendara connects to all of them at startup 
 
 ### Conversational chat with live data
 
-Ask anything in plain English. Rendara calls your connected data source, then streams the answer as a mix of narrative text, charts, KPI scorecards, and Mermaid flow diagrams. The three-dot typing indicator pulses during every step — including tool calls.
+Ask anything in plain English. Rendara calls your connected data source, then streams the answer as a mix of narrative text, charts, KPI scorecards, and Mermaid flow diagrams. The three-dot typing indicator pulses during every step — including tool calls. Each response shows which tool was called and how long it took.
 
-![Chat with charts and KPIs](docs/screenshots/02-chat-with-charts.png)
+![Chat with live bar chart](docs/screenshots/02-chat-with-charts.png)
 
 **Supported visualisation types**
 
@@ -339,8 +339,6 @@ Ask anything in plain English. Rendara calls your connected data source, then st
 | Mermaid diagram | Flow charts, sequence diagrams, ERDs |
 
 Expand any visualisation to full screen with the **↗** icon in the top-right corner of the block. All content zooms to fit its container — no horizontal scrollbars.
-
-Each assistant message shows a **bookmark icon** you can click to pin the response for later.
 
 ---
 
@@ -360,21 +358,15 @@ Ask Rendara in chat:
 
 The agent generates a tile layout and saves it automatically. Navigate to **Dashboards** in the sidebar to open it.
 
-**Dashboard canvas**
+**Executive Summary Dashboard** — KPI row, revenue trend, churn trend, revenue mix, and narrative tile:
 
-![Dashboard detail](docs/screenshots/04-dashboard-detail.png)
+![Executive Summary Dashboard](docs/screenshots/04-dashboard-detail.png)
+
+**Customer Analytics Dashboard** — churn trend line, ARPU by segment, risk band pie, churn rate by segment:
+
+![Customer Analytics Dashboard](docs/screenshots/05-dashboard-customer.png)
 
 Each tile is independently sized and positioned on the canvas. Content zooms to fit — charts and Mermaid diagrams fill their tiles without scrollbars. Click **↗** on any tile to expand it to full screen.
-
-**Agent Chat panel**
-
-![Dashboard agent panel](docs/screenshots/05-dashboard-agent-panel.png)
-
-Every dashboard has a collapsible **Agent Chat** panel on the right. Type instructions to modify the dashboard without leaving the view:
-
-- *"Add a pie chart for regional breakdown"*
-- *"Change the title to Q3 Revenue Overview"*
-- *"Remove the bottom-right tile"*
 
 ---
 
@@ -390,13 +382,17 @@ Ask Rendara in chat:
 - *"Turn this analysis into a 5-slide presentation"*
 - *"Build a story showing the churn trend"*
 
-**Story viewer**
+**Story viewer** — slide navigation, slide counter, and Present button:
 
 ![Story viewer](docs/screenshots/06-story-viewer.png)
 
 The viewer shows the current slide with a **slide counter** (e.g. 1 / 4) and **‹ ›** navigation buttons. The **Present** button enters full-screen mode.
 
-**Presentation mode**
+**Stories index** — each card shows a miniature first-slide preview:
+
+![Stories index](docs/screenshots/04-stories-index.png)
+
+**Presentation mode** — full-screen with slide content and minimal controls:
 
 ![Presentation mode](docs/screenshots/07-story-presentation.png)
 
@@ -412,17 +408,17 @@ Full-screen presentation mode shows slides without any chrome. Navigate with:
 
 Any assistant message can be pinned for quick reference. Pins are saved to the local database and persist across sessions.
 
-**Pinning a message**
-
-Hover over any assistant message and click the **bookmark icon**. A modal lets you set a title and optional description.
+**Pinning a message** — click the bookmark icon to open the Save modal:
 
 ![Pin modal](docs/screenshots/08-pin-modal.png)
 
-**Pinned page**
+The **Saved ✓** confirmation appears when the pin is stored.
+
+**Pinned page** — all saved responses in a card grid:
 
 ![Pinned responses](docs/screenshots/09-pinned-page.png)
 
-Open **Pinned** in the sidebar to see all saved items. Each card shows the title, description, and the original content. Click to open the source conversation.
+Open **Pinned** in the sidebar to see all saved items. Each card shows the title and date. Click to open the source conversation.
 
 ---
 

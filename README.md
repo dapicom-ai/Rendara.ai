@@ -1,5 +1,11 @@
 # Rendara — AI Data Analysis Agent
 
+> **Version 0.1 — Local Showcase Only**
+>
+> This is an early-stage proof of concept intended to run on a local desktop machine. It has no authentication, no user accounts, and no access control — all data is shared in a single local database. Do not expose it to the internet or run it in a multi-user environment.
+>
+> MCP server connections currently support SSE endpoints only. Servers that require OAuth or other authentication flows are not yet supported.
+
 Rendara is a conversational data analysis agent. Connect it to any MCP-compatible data source, ask questions in plain English, and get back charts, KPI scorecards, flow diagrams, and narrative — all in real time. Save any result to a **Dashboard** or compose it into a slide-based **Story**.
 
 ![Rendara home screen](docs/screenshots/01-home.png)
@@ -456,3 +462,32 @@ rendara/
     ├── semantic_meta.py        # Static schema loader + live column type enrichment
     └── demo_semantic_meta.json     # Example semantic model (swap in your own)
 ```
+
+---
+
+## Limitations
+
+Rendara v0.1 is a local desktop showcase. The following are known limitations and are not bugs — they are gaps that would need to be addressed before running this in a production or multi-user environment.
+
+**Security & Access Control**
+- No authentication or user accounts. Anyone with access to the running app can read, edit, and delete all data.
+- No authorisation or ownership checks. All conversations, dashboards, stories, and pinned items are visible to everyone.
+- No HTTPS. The app runs on plain HTTP and is not safe to expose over a network.
+- No rate limiting. The chat endpoint is unprotected against abuse.
+
+**MCP Connectivity**
+- MCP servers are connected via SSE only. Servers that require OAuth, API keys, or other authentication handshakes are not supported in this version.
+- MCP server list is static (`backend/mcp_servers.json`). There is no UI for adding or removing servers at runtime.
+
+**Data & Storage**
+- All data is stored in a single local SQLite file (`backend/demo.db`). This is not suitable for concurrent users or production workloads.
+- No data backup or recovery mechanism.
+- No data expiry or retention policy — data accumulates indefinitely.
+
+**Deployment**
+- No Docker or containerisation. Setup is manual.
+- Not designed for cloud deployment without significant additional work (auth, secrets management, database migration, HTTPS).
+
+**AI Model**
+- Uses a shared OpenRouter API key with no per-user quotas. All users share the same usage and cost.
+- No fallback if the configured model is unavailable.

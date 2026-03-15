@@ -8,25 +8,130 @@ Rendara is a conversational data analysis agent. Connect it to any MCP-compatibl
 
 ## Table of Contents
 
-1. [Requirements](#requirements)
-2. [Installation](#installation)
+1. [Features](#features)
+   - [Conversational chat with live data](#conversational-chat-with-live-data)
+   - [Dashboards](#dashboards)
+   - [Stories](#stories)
+   - [Pinned responses](#pinned-responses)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
    - [1. Clone the repository](#1-clone-the-repository)
    - [2. Install frontend dependencies](#2-install-frontend-dependencies)
    - [3. Install backend dependencies](#3-install-backend-dependencies)
    - [4. Configure environment variables](#4-configure-environment-variables)
-3. [Running Rendara](#running-rendara)
-4. [Connecting a Data Source (MCP)](#connecting-a-data-source-mcp)
+4. [Running Rendara](#running-rendara)
+5. [Connecting a Data Source (MCP)](#connecting-a-data-source-mcp)
    - [How MCP works in Rendara](#how-mcp-works-in-rendara)
    - [Adding a Power BI Remote MCP server](#adding-a-power-bi-remote-mcp-server)
    - [Adding a custom SQL MCP server](#adding-a-custom-sql-mcp-server)
    - [Multiple MCP servers](#multiple-mcp-servers)
    - [Configuring the AI model](#configuring-the-ai-model)
-5. [Features](#features)
-   - [Conversational chat with live data](#conversational-chat-with-live-data)
-   - [Dashboards](#dashboards)
-   - [Stories](#stories)
-   - [Pinned responses](#pinned-responses)
 6. [Project structure](#project-structure)
+
+---
+
+## Features
+
+### Conversational chat with live data
+
+Ask anything in plain English. Rendara calls your connected data source, then streams the answer as a mix of narrative text, charts, KPI scorecards, and Mermaid flow diagrams. The three-dot typing indicator pulses during every step — including tool calls. Each response shows which tool was called and how long it took.
+
+![Chat with live bar chart](docs/screenshots/02-chat-with-charts.png)
+
+**Supported visualisation types**
+
+| Type | Best for |
+|------|----------|
+| Bar chart | Category comparisons, ranked lists |
+| Line chart | Time series, trends over time |
+| Area chart | Cumulative values, stacked series |
+| Pie / donut chart | Share and composition |
+| Scatter chart | Correlation, outlier detection |
+| Composed chart | Mixed bar + line on one axis |
+| KPI scorecard | Headline metrics with trend arrows |
+| Mermaid diagram | Flow charts, sequence diagrams, ERDs |
+
+Expand any visualisation to full screen with the **↗** icon in the top-right corner of the block. All content zooms to fit its container — no horizontal scrollbars.
+
+---
+
+### Dashboards
+
+Dashboards are agent-generated free-form canvas layouts. Each tile holds a chart, KPI scorecard, Mermaid diagram, or text block.
+
+![Dashboards index](docs/screenshots/03-dashboards-index.png)
+
+**Creating a dashboard**
+
+Ask Rendara in chat:
+
+- *"Build me a dashboard"*
+- *"Create a dashboard showing revenue, churn, and top customers"*
+- *"Turn this analysis into a dashboard"*
+
+The agent generates a tile layout and saves it automatically. Navigate to **Dashboards** in the sidebar to open it.
+
+**Executive Summary Dashboard** — KPI row, revenue trend, churn trend, revenue mix, and narrative tile:
+
+![Executive Summary Dashboard](docs/screenshots/04-dashboard-detail.png)
+
+**Customer Analytics Dashboard** — churn trend line, ARPU by segment, risk band pie, churn rate by segment:
+
+![Customer Analytics Dashboard](docs/screenshots/05-dashboard-customer.png)
+
+Each tile is independently sized and positioned on the canvas. Content zooms to fit — charts and Mermaid diagrams fill their tiles without scrollbars. Click **↗** on any tile to expand it to full screen.
+
+---
+
+### Stories
+
+Stories are slide-based presentations generated from your data. Each slide is a full-screen canvas with charts, text, and diagrams.
+
+**Creating a story**
+
+Ask Rendara in chat:
+
+- *"Create a story from my data"*
+- *"Turn this analysis into a 5-slide presentation"*
+- *"Build a story showing the churn trend"*
+
+**Story viewer** — slide navigation, slide counter, and Present button:
+
+![Story viewer](docs/screenshots/06-story-viewer.png)
+
+The viewer shows the current slide with a **slide counter** (e.g. 1 / 4) and **‹ ›** navigation buttons. The **Present** button enters full-screen mode.
+
+**Stories index** — each card shows a miniature first-slide preview:
+
+![Stories index](docs/screenshots/04-stories-index.png)
+
+**Presentation mode** — full-screen with slide content and minimal controls:
+
+![Presentation mode](docs/screenshots/07-story-presentation.png)
+
+Full-screen presentation mode shows slides without any chrome. Navigate with:
+
+- **← →** keyboard arrow keys
+- On-screen **‹ ›** buttons
+- **✕** to exit back to the viewer
+
+---
+
+### Pinned responses
+
+Any assistant message can be pinned for quick reference. Pins are saved to the local database and persist across sessions.
+
+**Pinning a message** — click the bookmark icon to open the Save modal:
+
+![Pin modal](docs/screenshots/08-pin-modal.png)
+
+The **Saved ✓** confirmation appears when the pin is stored.
+
+**Pinned page** — all saved responses in a card grid:
+
+![Pinned responses](docs/screenshots/09-pinned-page.png)
+
+Open **Pinned** in the sidebar to see all saved items. Each card shows the title and date. Click to open the source conversation.
 
 ---
 
@@ -314,111 +419,6 @@ List as many servers as you like — Rendara connects to all of them at startup 
 | `max_tool_rounds` | Maximum sequential tool-call cycles before the agent gives up |
 | `temperature` | Lower = more precise and deterministic |
 | `tool_timeout_seconds` | How long to wait for a single MCP tool call |
-
----
-
-## Features
-
-### Conversational chat with live data
-
-Ask anything in plain English. Rendara calls your connected data source, then streams the answer as a mix of narrative text, charts, KPI scorecards, and Mermaid flow diagrams. The three-dot typing indicator pulses during every step — including tool calls. Each response shows which tool was called and how long it took.
-
-![Chat with live bar chart](docs/screenshots/02-chat-with-charts.png)
-
-**Supported visualisation types**
-
-| Type | Best for |
-|------|----------|
-| Bar chart | Category comparisons, ranked lists |
-| Line chart | Time series, trends over time |
-| Area chart | Cumulative values, stacked series |
-| Pie / donut chart | Share and composition |
-| Scatter chart | Correlation, outlier detection |
-| Composed chart | Mixed bar + line on one axis |
-| KPI scorecard | Headline metrics with trend arrows |
-| Mermaid diagram | Flow charts, sequence diagrams, ERDs |
-
-Expand any visualisation to full screen with the **↗** icon in the top-right corner of the block. All content zooms to fit its container — no horizontal scrollbars.
-
----
-
-### Dashboards
-
-Dashboards are agent-generated free-form canvas layouts. Each tile holds a chart, KPI scorecard, Mermaid diagram, or text block.
-
-![Dashboards index](docs/screenshots/03-dashboards-index.png)
-
-**Creating a dashboard**
-
-Ask Rendara in chat:
-
-- *"Build me a dashboard"*
-- *"Create a dashboard showing revenue, churn, and top customers"*
-- *"Turn this analysis into a dashboard"*
-
-The agent generates a tile layout and saves it automatically. Navigate to **Dashboards** in the sidebar to open it.
-
-**Executive Summary Dashboard** — KPI row, revenue trend, churn trend, revenue mix, and narrative tile:
-
-![Executive Summary Dashboard](docs/screenshots/04-dashboard-detail.png)
-
-**Customer Analytics Dashboard** — churn trend line, ARPU by segment, risk band pie, churn rate by segment:
-
-![Customer Analytics Dashboard](docs/screenshots/05-dashboard-customer.png)
-
-Each tile is independently sized and positioned on the canvas. Content zooms to fit — charts and Mermaid diagrams fill their tiles without scrollbars. Click **↗** on any tile to expand it to full screen.
-
----
-
-### Stories
-
-Stories are slide-based presentations generated from your data. Each slide is a full-screen canvas with charts, text, and diagrams.
-
-**Creating a story**
-
-Ask Rendara in chat:
-
-- *"Create a story from my data"*
-- *"Turn this analysis into a 5-slide presentation"*
-- *"Build a story showing the churn trend"*
-
-**Story viewer** — slide navigation, slide counter, and Present button:
-
-![Story viewer](docs/screenshots/06-story-viewer.png)
-
-The viewer shows the current slide with a **slide counter** (e.g. 1 / 4) and **‹ ›** navigation buttons. The **Present** button enters full-screen mode.
-
-**Stories index** — each card shows a miniature first-slide preview:
-
-![Stories index](docs/screenshots/04-stories-index.png)
-
-**Presentation mode** — full-screen with slide content and minimal controls:
-
-![Presentation mode](docs/screenshots/07-story-presentation.png)
-
-Full-screen presentation mode shows slides without any chrome. Navigate with:
-
-- **← →** keyboard arrow keys
-- On-screen **‹ ›** buttons
-- **✕** to exit back to the viewer
-
----
-
-### Pinned responses
-
-Any assistant message can be pinned for quick reference. Pins are saved to the local database and persist across sessions.
-
-**Pinning a message** — click the bookmark icon to open the Save modal:
-
-![Pin modal](docs/screenshots/08-pin-modal.png)
-
-The **Saved ✓** confirmation appears when the pin is stored.
-
-**Pinned page** — all saved responses in a card grid:
-
-![Pinned responses](docs/screenshots/09-pinned-page.png)
-
-Open **Pinned** in the sidebar to see all saved items. Each card shows the title and date. Click to open the source conversation.
 
 ---
 

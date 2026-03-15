@@ -502,21 +502,21 @@ async def run_chat_stream(
             "completion_tokens": final_usage["completion_tokens"],
         }))
 
-        yield _sse({
-            "type": "message_complete",
-            "conversation_id": conversation_id,
-            "message_id": message_id,
-            "usage": final_usage,
-        })
-
-        # Return content_blocks and user_message for persistence
-        # The caller (chat router) persists the messages after receiving this signal
-        # We encode the data in a special internal event the router intercepts
+        # Persist messages BEFORE signalling completion to the client.
+        # This ensures the DB write happens even if the client disconnects
+        # immediately after receiving message_complete.
         yield _sse({
             "type": "_persist",
             "message_id": message_id,
             "user_message": user_message,
             "content_blocks": content_blocks,
+        })
+
+        yield _sse({
+            "type": "message_complete",
+            "conversation_id": conversation_id,
+            "message_id": message_id,
+            "usage": final_usage,
         })
 
     except Exception as exc:

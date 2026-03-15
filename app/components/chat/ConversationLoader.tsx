@@ -82,6 +82,66 @@ function convertToThreadMessages(messages: StoredMessage[]): ThreadMessageLike[]
   });
 }
 
+interface ResourceConversationLoaderProps {
+  conversationId: string;
+  resourceId: string;
+  onResourceUpdated?: (resourceType: string, resourceId: string) => void;
+}
+
+/**
+ * Like ConversationLoader but passes resourceId and onResourceUpdated
+ * to ChatProvider — used by the AgentChatPanel on dashboard/story detail pages.
+ */
+export function ResourceConversationLoader({ conversationId, resourceId, onResourceUpdated }: ResourceConversationLoaderProps) {
+  const [initialMessages, setInitialMessages] = useState<ThreadMessageLike[] | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMessages() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}`);
+        if (!res.ok) {
+          setInitialMessages(undefined);
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled && data.messages?.length) {
+          setInitialMessages(convertToThreadMessages(data.messages));
+        }
+      } catch {
+        // Conversation not found or network error — start fresh
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadMessages();
+    return () => { cancelled = true; };
+  }, [conversationId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-20 text-muted-foreground text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  return (
+    <ChatProvider
+      key={conversationId}
+      conversationId={conversationId}
+      initialMessages={initialMessages}
+      resourceId={resourceId}
+      onResourceUpdated={onResourceUpdated}
+    >
+      <ConversationView />
+    </ChatProvider>
+  );
+}
+
 interface ConversationLoaderProps {
   conversationId: string;
 }

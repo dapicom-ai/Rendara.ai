@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { PanelRight } from "lucide-react";
-import { ChatProvider } from "@/app/components/chat/ChatProvider";
-import { ConversationView } from "@/app/components/chat/ConversationView";
+import { PanelRight, RotateCcw } from "lucide-react";
+import { ResourceConversationLoader } from "@/app/components/chat/ConversationLoader";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8001";
 
@@ -16,7 +15,6 @@ interface AgentChatPanelProps {
 /**
  * Fetches the resource, reuses an existing conversation_id if present,
  * or generates a new UUID and PATCHes it onto the resource.
- * The conversation row is auto-created by the chat stream endpoint on the first message.
  */
 async function initResourceConversation(resourceId: string): Promise<string> {
   const [resourceType, resourceUuid] = resourceId.split(":", 2);
@@ -46,20 +44,52 @@ async function initResourceConversation(resourceId: string): Promise<string> {
   return conversationId;
 }
 
+/**
+ * Creates a fresh conversation_id and PATCHes it onto the resource.
+ */
+async function resetResourceConversation(resourceId: string): Promise<string> {
+  const [resourceType, resourceUuid] = resourceId.split(":", 2);
+  const endpoint = resourceType === "dashboard"
+    ? `${BACKEND_URL}/api/dashboards/${resourceUuid}`
+    : `${BACKEND_URL}/api/stories/${resourceUuid}`;
+
+  const conversationId =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+  await fetch(endpoint, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conversation_id: conversationId }),
+  });
+
+  return conversationId;
+}
+
 export function AgentChatPanel({ resourceId, onResourceUpdated }: AgentChatPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  // Bump this to force ResourceConversationLoader to re-mount and re-fetch
+  const [loadKey, setLoadKey] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isExpanded || conversationId || isInitializing) return;
+    if (conversationId || isInitializing) return;
     setIsInitializing(true);
     initResourceConversation(resourceId)
       .then(setConversationId)
       .catch(console.error)
       .finally(() => setIsInitializing(false));
-  }, [isExpanded, resourceId, conversationId, isInitializing]);
+  }, [resourceId, conversationId, isInitializing]);
+
+  // When the panel re-expands, bump loadKey to re-fetch messages from DB
+  useEffect(() => {
+    if (isExpanded && conversationId) {
+      setLoadKey((k) => k + 1);
+    }
+  }, [isExpanded, conversationId]);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -71,6 +101,16 @@ export function AgentChatPanel({ resourceId, onResourceUpdated }: AgentChatPanel
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isExpanded]);
+
+  const handleNewConversation = async () => {
+    try {
+      const newId = await resetResourceConversation(resourceId);
+      setConversationId(newId);
+      setLoadKey((k) => k + 1);
+    } catch (err) {
+      console.error("Failed to reset conversation", err);
+    }
+  };
 
   if (!isExpanded) {
     return (
@@ -92,13 +132,23 @@ export function AgentChatPanel({ resourceId, onResourceUpdated }: AgentChatPanel
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border flex-shrink-0">
         <span className="text-xs font-medium text-muted-foreground">Agent Chat</span>
-        <button
-          onClick={() => setIsExpanded(false)}
-          aria-label="Close agent chat"
-          className="flex items-center justify-center h-8 w-8 rounded-lg hover:bg-surface transition-colors text-muted-foreground hover:text-primary"
-        >
-          <PanelRight className="size-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleNewConversation}
+            aria-label="New conversation"
+            title="New conversation"
+            className="flex items-center justify-center h-8 w-8 rounded-lg hover:bg-surface transition-colors text-muted-foreground hover:text-primary"
+          >
+            <RotateCcw className="size-3.5" />
+          </button>
+          <button
+            onClick={() => setIsExpanded(false)}
+            aria-label="Close agent chat"
+            className="flex items-center justify-center h-8 w-8 rounded-lg hover:bg-surface transition-colors text-muted-foreground hover:text-primary"
+          >
+            <PanelRight className="size-4" />
+          </button>
+        </div>
       </div>
 
       {/* Chat content */}
@@ -109,14 +159,12 @@ export function AgentChatPanel({ resourceId, onResourceUpdated }: AgentChatPanel
           </div>
         )}
         {!isInitializing && conversationId && (
-          <ChatProvider
-            key={conversationId}
+          <ResourceConversationLoader
+            key={`${conversationId}-${loadKey}`}
             conversationId={conversationId}
             resourceId={resourceId}
             onResourceUpdated={onResourceUpdated}
-          >
-            <ConversationView />
-          </ChatProvider>
+          />
         )}
       </div>
     </div>

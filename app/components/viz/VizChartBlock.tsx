@@ -3,11 +3,18 @@
  * Handles status states, validation, expand/pin buttons, and animations.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { VizSpec, ComposedVizSpec, isValidVizSpec, isValidKpiSpec } from '@/types/viz';
+import {
+  VizSpec,
+  ComposedVizSpec,
+  isValidVizSpec,
+  isValidKpiSpec,
+  prepareChartData,
+  deriveSeries,
+} from '@/types/viz';
 import { VizErrorCard } from './VizErrorCard';
 import { VizSkeleton } from './VizSkeleton';
 import { KpiScorecardBlock } from './KpiScorecardBlock';
@@ -71,24 +78,31 @@ export function VizChartBlock({
     return <VizErrorCard message="Invalid chart specification" className={className} />;
   }
 
+  // Prepare data: sorting + topN aggregation
+  const series = deriveSeries(spec);
+  const primaryKey = series[0]?.key ?? spec.yKey;
+  const preparedData = prepareChartData(spec.data, spec.config, primaryKey);
+
+  // Build a spec copy with the prepared data for renderers
+  const preparedSpec = { ...spec, data: preparedData };
+
   // Dispatch to appropriate renderer
   function renderChart() {
-    switch (spec.type) {
+    switch (preparedSpec.type) {
       case 'bar':
-        return <BarChartRenderer spec={spec} />;
+        return <BarChartRenderer spec={preparedSpec} />;
       case 'line':
-        return <LineChartRenderer spec={spec} />;
+        return <LineChartRenderer spec={preparedSpec} />;
       case 'area':
-        return <AreaChartRenderer spec={spec} />;
+        return <AreaChartRenderer spec={preparedSpec} />;
       case 'pie':
-        return <PieChartRenderer spec={spec} />;
+        return <PieChartRenderer spec={preparedSpec} />;
       case 'scatter':
-        return <ScatterChartRenderer spec={spec} />;
+        return <ScatterChartRenderer spec={preparedSpec} />;
       case 'composed':
-        // [INFERRED] y2Key is guaranteed to exist due to validation
-        return <ComposedChartRenderer spec={spec as ComposedVizSpec} />;
+        return <ComposedChartRenderer spec={preparedSpec as ComposedVizSpec} />;
       default:
-        return <VizErrorCard message={`Unsupported chart type: ${spec.type}`} />;
+        return <VizErrorCard message={`Unsupported chart type: ${(preparedSpec as any).type}`} />;
     }
   }
 

@@ -10,7 +10,14 @@ export const CHART_COLORS = [
   '#10B981', // 2: emerald
   '#F59E0B', // 3: amber
   '#EF4444', // 4: red
+  '#EC4899', // 5: pink
+  '#6366F1', // 6: indigo
+  '#14B8A6', // 7: teal
 ] as const;
+
+export const MUTED_OPACITY = 0.25;
+export const HIGHLIGHT_STROKE_WIDTH = 3;
+export const REFERENCE_LINE_COLOR = '#9CA3AF';
 
 export const CHART_THEME = {
   background: 'transparent',

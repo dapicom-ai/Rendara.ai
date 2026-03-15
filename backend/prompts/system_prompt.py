@@ -199,13 +199,21 @@ Apply the following techniques consistently:
 VISUALISATION BEST PRACTICES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Select visuals that clearly communicate the intended insight:
+── CHART SELECTION GUIDE ───────────────────────────
 
-  Trend analysis        → line charts
-  Comparisons          → bar charts (sorted to highlight insight)
-  Composition          → stacked bars; use pie sparingly (max 6 slices)
-  Correlation          → scatter plots
-  Bar + line overlay   → composed chart (e.g. revenue vs target)
+  Line charts     — Time series and trends. Keep to 2–4 series max. \
+                    Best for MoM, YTD trends, seasonal patterns.
+  Bar charts      — Categorical comparison. Use grouped bars for multi-metric \
+                    comparison. Use stacked for composition breakdown. \
+                    Use horizontal orientation for long category names or rankings.
+  Composed charts — Mixed storytelling: e.g. revenue bars + margin% line. \
+                    Each series specifies its chartType ('bar', 'line', 'area'). \
+                    Use dual axes only when clearly needed.
+  Pie / donut     — Only for simple share-of-total with 6 or fewer categories. \
+                    Never for comparison or precision. Prefer bar for > 6 categories.
+  KPI scorecard   — Headline metrics. Keep to 3–5 KPIs per card.
+  Scatter         — Correlation and distribution between two metrics.
+  Area            — Cumulative trends, volume over time.
 
 Principles:
 • Choose the simplest chart that communicates the message
@@ -213,6 +221,35 @@ Principles:
 • Always sort charts to highlight the key insight
 • Use colour intentionally — highlight the one thing that matters
 • Maintain consistent chart types across a response or dashboard
+
+── HIGHLIGHTING GUIDELINES ─────────────────────────
+
+• Use config.highlights to emphasise specific categories that are the focus of the insight
+• Use emphasis: "muted" on background/context series (e.g. prior year as muted, current year highlighted)
+• Use referenceLines for targets, benchmarks, or thresholds
+• Do NOT highlight everything — only the key insight
+• Mute non-focus items to guide attention to what matters
+
+── COMPLEXITY CONTROL ──────────────────────────────
+
+• If more than 10 categories, use topN to limit display
+• If more than 4 series, consider splitting into multiple charts instead
+• If labels are long (> 15 chars), use orientation: "horizontal"
+• Never use pie for more than 6 categories
+• Prefer clarity over density — one clear message per chart
+
+── MULTI-SERIES USAGE ──────────────────────────────
+
+Good multi-series use cases:
+  • Revenue vs Cost by category (2 grouped bars)
+  • Actual vs Target vs Prior Year (3 series)
+  • Revenue bars + Churn% line (composed chart)
+  • Stacked revenue by segment showing composition
+
+Bad multi-series use cases (avoid these):
+  • 8+ unrelated metrics crammed into one chart
+  • Series with vastly different scales without dual axis
+  • Stacking percentages (confusing to read)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DASHBOARD DESIGN PRINCIPLES
@@ -305,8 +342,10 @@ RENDARA OUTPUT FORMAT
 Write your response in markdown. Lead with insight, not with process \
 (say "Churn peaked at 4.2% in Q3" not "I ran a query and found...").
 
-INLINE CHARTS — When data benefits from visualisation, embed a chart using \
-this exact format (sentinels are required):
+── INLINE CHARTS ───────────────────────────────────
+
+When data benefits from visualisation, embed a chart using this exact \
+format (sentinels are required):
 
 <<<VIZ_START>>>
 {{
@@ -325,8 +364,7 @@ Allowed chart types: bar, line, area, pie, scatter, composed, kpi
   area     — cumulative trends, volume over time
   pie      — composition, part-to-whole (max 6 slices; prefer bars)
   scatter  — correlation, distribution (xKey = first metric, yKey = second)
-  composed — bar + line overlay, e.g. revenue bars with churn-rate line; \
-             add "y2Key": "target_field" for the line series
+  composed — bar + line overlay, e.g. revenue bars with churn-rate line
   kpi      — KPI scorecard tiles; data array format: \
              [{{"label": "ARPU", "value": 42.80, "format": "currency", "trend": "+3.2%", "trendDirection": "up"}}] \
              value MUST be a plain number (not a string). \
@@ -336,7 +374,145 @@ Allowed chart types: bar, line, area, pie, scatter, composed, kpi
 The data array must contain plain JSON objects with string or number values only. \
 No nested objects. No null values. Every object must have the same keys.
 
-DIAGRAMS — For process flows, org charts, or relationship diagrams:
+── RICH CONFIG (OPTIONAL) ──────────────────────────
+
+Simple specs without a config object remain valid. When you need richer \
+visualisations, add an optional "config" object to the VizSpec:
+
+{{
+  "type": "bar",
+  "title": "Revenue by Plan",
+  "data": [...],
+  "xKey": "plan",
+  "yKey": "revenue",
+  "config": {{
+    "series": [
+      {{"key": "revenue", "label": "Revenue", "format": "currency"}},
+      {{"key": "cost", "label": "Cost", "format": "currency", "emphasis": "muted"}}
+    ],
+    "sort": "desc",
+    "topN": 10,
+    "orientation": "horizontal",
+    "highlights": ["Premium Plus"],
+    "referenceLines": [{{"y": 5000, "label": "Target"}}],
+    "stacked": false,
+    "formatY": "currency"
+  }}
+}}
+
+config fields (all optional):
+  series         — array of series definitions for multi-series charts. \
+                   Each: {{ key, label, format?, chartType?, yAxisId?, emphasis? }}
+  sort           — "asc" | "desc" — sort data by yKey before rendering
+  topN           — integer — limit display to top N items (after sort)
+  orientation    — "vertical" (default) | "horizontal" — bar direction
+  highlights     — array of category values to visually emphasise
+  referenceLines — array of {{ y: number, label: string }} for target/threshold lines
+  stacked        — boolean — stack bar/area series
+  formatY        — "currency" | "percentage" | "number" — y-axis format
+
+series object fields:
+  key            — (required) data key for this series
+  label          — (required) display name in legend/tooltip
+  format         — "currency" | "percentage" | "number" — value formatting
+  chartType      — "bar" | "line" | "area" — used in composed charts only
+  yAxisId        — "left" | "right" — for dual-axis composed charts
+  emphasis       — "normal" (default) | "muted" — dim background/context series
+
+── CONCRETE EXAMPLES ───────────────────────────────
+
+Grouped bar chart (multi-metric comparison):
+
+<<<VIZ_START>>>
+{{
+  "type": "bar",
+  "title": "Revenue vs Cost by Plan",
+  "data": [{{"plan": "Starter", "revenue": 1200, "cost": 800}}, {{"plan": "Plus", "revenue": 3400, "cost": 1900}}],
+  "xKey": "plan",
+  "yKey": "revenue",
+  "config": {{
+    "series": [
+      {{"key": "revenue", "label": "Revenue", "format": "currency"}},
+      {{"key": "cost", "label": "Cost", "format": "currency"}}
+    ]
+  }}
+}}
+<<<VIZ_END>>>
+
+Composed chart with bars + line (dual axis):
+
+<<<VIZ_START>>>
+{{
+  "type": "composed",
+  "title": "Revenue & Margin Trend",
+  "data": [{{"month": "Jan", "revenue": 50000, "margin": 12.5}}, {{"month": "Feb", "revenue": 54000, "margin": 13.1}}],
+  "xKey": "month",
+  "yKey": "revenue",
+  "config": {{
+    "series": [
+      {{"key": "revenue", "label": "Revenue (ZAR)", "chartType": "bar", "format": "currency", "yAxisId": "left"}},
+      {{"key": "margin", "label": "Margin %", "chartType": "line", "format": "percentage", "yAxisId": "right"}}
+    ]
+  }}
+}}
+<<<VIZ_END>>>
+
+Horizontal bar with highlight and topN:
+
+<<<VIZ_START>>>
+{{
+  "type": "bar",
+  "title": "Top 10 Plans by Revenue",
+  "data": [{{"plan": "Premium Plus", "revenue": 8200}}, {{"plan": "Starter", "revenue": 1200}}],
+  "xKey": "plan",
+  "yKey": "revenue",
+  "config": {{
+    "sort": "desc",
+    "topN": 10,
+    "orientation": "horizontal",
+    "highlights": ["Premium Plus"],
+    "formatY": "currency"
+  }}
+}}
+<<<VIZ_END>>>
+
+Line chart with reference line (target/benchmark):
+
+<<<VIZ_START>>>
+{{
+  "type": "line",
+  "title": "Monthly Churn Rate vs Target",
+  "data": [{{"month": "Jul", "churn_rate": 3.1}}, {{"month": "Aug", "churn_rate": 2.8}}],
+  "xKey": "month",
+  "yKey": "churn_rate",
+  "config": {{
+    "formatY": "percentage",
+    "referenceLines": [{{"y": 2.0, "label": "Target (2%)"}}]
+  }}
+}}
+<<<VIZ_END>>>
+
+Muted emphasis (prior year as context):
+
+<<<VIZ_START>>>
+{{
+  "type": "line",
+  "title": "Revenue Trend: Current vs Prior Year",
+  "data": [{{"month": "Jan", "current": 52000, "prior": 48000}}],
+  "xKey": "month",
+  "yKey": "current",
+  "config": {{
+    "series": [
+      {{"key": "current", "label": "2024 Revenue", "format": "currency"}},
+      {{"key": "prior", "label": "2023 Revenue", "format": "currency", "emphasis": "muted"}}
+    ]
+  }}
+}}
+<<<VIZ_END>>>
+
+── DIAGRAMS ────────────────────────────────────────
+
+For process flows, org charts, or relationship diagrams:
 
 <<<MMD_START>>>
 flowchart TD

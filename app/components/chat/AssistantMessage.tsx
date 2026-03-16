@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { MessagePrimitive, useMessage } from "@assistant-ui/react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { messageVariants } from "@/lib/animations";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { MessageActionBar } from "./MessageActionBar";
@@ -68,7 +69,7 @@ export function AssistantMessage() {
                     prose-li:text-white prose-ul:text-white prose-ol:text-white
                     prose-a:text-accent prose-a:no-underline hover:prose-a:underline
                     prose-table:text-sm prose-th:text-muted-foreground prose-td:text-white">
-                  <ReactMarkdown>{text}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
                 </div>
               ),
             }}

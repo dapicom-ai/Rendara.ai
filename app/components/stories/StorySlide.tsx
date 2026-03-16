@@ -42,13 +42,13 @@ export function StorySlide({
         </h2>
 
         {/* Content - rendered as markdown */}
-        <div className="flex-1 overflow-hidden">
+        <div className={`overflow-y-auto ${slide.visualizations?.length ? 'max-h-[40%] shrink-0' : 'flex-1'}`}>
           <MarkdownRenderer content={slide.content} />
         </div>
 
-        {/* Visualizations */}
+        {/* Visualizations — takes remaining space when present */}
         {slide.visualizations && slide.visualizations.length > 0 && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
             {slide.visualizations.map((block, idx) => {
               if (block.type === "viz_chart") {
                 return (

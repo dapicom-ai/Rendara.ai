@@ -110,6 +110,7 @@ export function ExpandOverlay() {
         blockId={blockId}
         showPinButton={true}
         onPin={handlePin}
+        compact={true}
       />
     );
   } else {

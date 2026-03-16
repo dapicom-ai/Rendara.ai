@@ -73,6 +73,7 @@ export function StorySlide({
                     readOnly={true}
                     showPinButton={false}
                     allowExpand={true}
+                    compact={true}
                   />
                 );
               }

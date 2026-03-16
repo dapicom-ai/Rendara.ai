@@ -379,6 +379,69 @@ const insightTopPlanLeader: VizSpec = {
   },
 };
 
+// Scenario: MoM revenue comparison — current year vs prior year with variance %
+const insightMoMComparison: VizSpec = {
+  type: "composed",
+  title: "Revenue MoM: 2025 vs 2024 with Variance",
+  xKey: "month",
+  yKey: "current_year_sgd",
+  data: [
+    { month: "Jan",  current_year_sgd: 56200, prior_year_sgd: 52100, variance_pct: 7.9 },
+    { month: "Feb",  current_year_sgd: 55800, prior_year_sgd: 53400, variance_pct: 4.5 },
+    { month: "Mar",  current_year_sgd: 57900, prior_year_sgd: 54200, variance_pct: 6.8 },
+    { month: "Apr",  current_year_sgd: 56900, prior_year_sgd: 55800, variance_pct: 2.0 },
+    { month: "May",  current_year_sgd: 58200, prior_year_sgd: 56100, variance_pct: 3.7 },
+    { month: "Jun",  current_year_sgd: 57400, prior_year_sgd: 57300, variance_pct: 0.2 },
+    { month: "Jul",  current_year_sgd: 59100, prior_year_sgd: 58500, variance_pct: 1.0 },
+    { month: "Aug",  current_year_sgd: 60500, prior_year_sgd: 59200, variance_pct: 2.2 },
+    { month: "Sep",  current_year_sgd: 61200, prior_year_sgd: 60100, variance_pct: 1.8 },
+    { month: "Oct",  current_year_sgd: 48300, prior_year_sgd: 58800, variance_pct: -17.9 },
+    { month: "Nov",  current_year_sgd: 52100, prior_year_sgd: 57600, variance_pct: -9.6 },
+    { month: "Dec",  current_year_sgd: 54500, prior_year_sgd: 56900, variance_pct: -4.2 },
+  ],
+  config: {
+    series: [
+      { key: "current_year_sgd", label: "2025 Revenue", chartType: "bar", format: "currency", yAxisId: "left", emphasis: "highlight" },
+      { key: "prior_year_sgd", label: "2024 Revenue", chartType: "bar", format: "currency", yAxisId: "left", emphasis: "muted" },
+      { key: "variance_pct", label: "YoY Variance %", chartType: "line", format: "percentage", yAxisId: "right" },
+    ],
+    formatY: "currency",
+    legendPosition: "top",
+    referenceLines: [{ y: 0, label: "Break-even", strokeDasharray: "4 4" }],
+  },
+};
+
+// Scenario: MoM ARPU trend with variance bars showing direction
+const insightArpuMoMVariance: VizSpec = {
+  type: "composed",
+  title: "ARPU MoM Change — Growth vs Decline",
+  xKey: "month",
+  yKey: "arpu_sgd",
+  data: [
+    { month: "Jan", arpu_sgd: 17.20, mom_change_pct: 0 },
+    { month: "Feb", arpu_sgd: 17.50, mom_change_pct: 1.7 },
+    { month: "Mar", arpu_sgd: 18.10, mom_change_pct: 3.4 },
+    { month: "Apr", arpu_sgd: 18.40, mom_change_pct: 1.7 },
+    { month: "May", arpu_sgd: 19.00, mom_change_pct: 3.3 },
+    { month: "Jun", arpu_sgd: 19.30, mom_change_pct: 1.6 },
+    { month: "Jul", arpu_sgd: 19.80, mom_change_pct: 2.6 },
+    { month: "Aug", arpu_sgd: 20.20, mom_change_pct: 2.0 },
+    { month: "Sep", arpu_sgd: 20.50, mom_change_pct: 1.5 },
+    { month: "Oct", arpu_sgd: 19.10, mom_change_pct: -6.8 },
+    { month: "Nov", arpu_sgd: 19.40, mom_change_pct: 1.6 },
+    { month: "Dec", arpu_sgd: 19.55, mom_change_pct: 0.8 },
+  ],
+  config: {
+    series: [
+      { key: "arpu_sgd", label: "ARPU (SGD)", chartType: "line", format: "currency", yAxisId: "left", emphasis: "highlight" },
+      { key: "mom_change_pct", label: "MoM Change %", chartType: "bar", format: "percentage", yAxisId: "right" },
+    ],
+    formatY: "currency",
+    legendPosition: "top",
+    referenceLines: [{ y: 0, label: "", strokeDasharray: "3 3" }],
+  },
+};
+
 // ── All fixtures in display order ──
 
 const chartVariations: { name: string; spec: VizSpec; height?: number }[] = [
@@ -421,6 +484,16 @@ const insightExamples: { name: string; description: string; spec: VizSpec; heigh
     name: "Market Leader Dominance",
     description: "5G Starter generates 33% of total plan revenue. Highlighted in full color with a horizontal layout for readability. Other plans shown muted for context.",
     spec: insightTopPlanLeader, height: 240,
+  },
+  {
+    name: "Revenue YoY: Current vs Prior with Variance",
+    description: "Grouped bars compare 2025 (bright) against 2024 (muted) month by month. A variance % line on the right axis instantly shows where performance flipped negative — Oct-Dec fell below prior year. The zero reference line marks the break-even point.",
+    spec: insightMoMComparison,
+  },
+  {
+    name: "ARPU MoM Change — Growth vs Decline",
+    description: "ARPU trend line (left axis) with MoM change % bars (right axis). Positive bars show growth months, negative bars flag decline. October's -6.8% drop is immediately visible against the zero reference line.",
+    spec: insightArpuMoMVariance,
   },
 ];
 

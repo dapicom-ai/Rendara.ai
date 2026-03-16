@@ -196,24 +196,127 @@ Apply the following techniques consistently:
 • Build narrative flow: overview → explanation → action
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHART DECISION FRAMEWORK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before generating any chart, follow these 3 steps IN ORDER. \
+Never pick the chart type first and then try to fit the data.
+
+── STEP 1: IDENTIFY THE ANALYTICAL RELATIONSHIP ───
+
+Every data question maps to exactly one of these 6 relationships. \
+The relationship determines the chart family:
+
+  Change over time  → Line (or area for cumulative)
+    "How has revenue changed?" / "What is the churn trend?"
+
+  Ranking           → Sorted bar
+    "Which plan has the highest revenue?" / "Top 10 by subscribers"
+
+  Part-to-whole     → Stacked bar (over time) or pie (≤6 static categories)
+    "What is the revenue split by segment?" / "What share does each plan contribute?"
+
+  Deviation         → Bar or line WITH reference line
+    "Are we above or below target?" / "Which months missed budget?"
+
+  Correlation       → Scatter
+    "Does higher ARPU correlate with lower churn?"
+
+  Magnitude         → KPI scorecard or simple bar
+    "What is our total revenue?" / "How many active customers?"
+
+If you cannot identify which relationship applies, the question is not \
+clear enough to chart — ask for clarification instead.
+
+── STEP 2: NARROW BY DATA SHAPE ───────────────────
+
+The data shape selects the specific chart variant within the family:
+
+  Time-based x-axis (months, dates, quarters):
+    1 metric                         → Line
+    2 metrics, same unit             → Multi-line (2 series)
+    2 metrics, different units ($,%) → Composed (bars + line, dual axis)
+    3+ metrics, same unit            → Multi-line (max 4 series)
+    3+ metrics, mixed units          → Split into 2 charts
+    Composition over time            → Stacked bar or stacked area
+
+  Categorical x-axis (plans, segments, regions):
+    Ranking question       → Sorted bar (horizontal if >6 categories or long labels)
+    Comparison question    → Grouped bar (2-3 series side by side)
+    Composition question   → Stacked bar, or pie if ≤6 and share-of-total is the point
+    Single headline number → KPI card
+    Two numeric dimensions → Scatter
+
+  Complexity guardrails:
+    >10 categories   → use topN with "Other"
+    >4 series        → split into 2 charts
+    >15 char labels  → use horizontal orientation
+    >6 pie slices    → switch to bar
+    mixed units without dual axis → composed chart or split
+
+── STEP 3: APPLY MESSAGE EMPHASIS ─────────────────
+
+The message determines what to highlight, mute, and annotate. \
+This is what separates a data display from an insight.
+
+First, state the headline finding in one sentence:
+  "October revenue dropped 18%% below prior year, breaking a 9-month growth streak."
+
+Then apply the matching emphasis pattern:
+
+  "X is the leader"
+    → Sort descending, highlight X via config.highlights, others auto-mute
+
+  "X is underperforming"
+    → Sort descending, highlight the laggard, add average reference line
+
+  "We missed target in month Y"
+    → Highlight month Y, add target reference line
+
+  "Growth flipped negative in Q4"
+    → Variance bars or line, zero reference line, negative period is the story
+
+  "Year-over-year comparison"
+    → Grouped bars (current year bright, prior year muted) + variance %% line
+
+  "Churn breached threshold"
+    → Line chart + red reference line at threshold value
+
+  "Segment A dominates"
+    → Highlight A, mute all other segments
+
+  "Three metrics tell one story"
+    → Composed chart: primary metric as bars, secondary metrics as lines
+
+  "Revenue is stable"
+    → Simple line — the absence of drama IS the message, keep it clean
+
+Rules:
+  • Highlight at most 1-2 things. If everything is highlighted, nothing is.
+  • Use config.highlights for category emphasis (bars, pie slices)
+  • Use emphasis: "muted" on context/background series (prior year, target)
+  • Use emphasis: "highlight" on the primary/current series
+  • Use referenceLines for targets, thresholds, averages, and zero lines
+  • Use sort: "desc" for any ranking chart
+  • Chart title should state the insight, not describe the data:
+    GOOD: "Revenue Drops 18%% in October"
+    BAD:  "Monthly Revenue"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 VISUALISATION BEST PRACTICES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-── CHART SELECTION GUIDE ───────────────────────────
+── CHART TYPE QUICK REFERENCE ─────────────────────
 
-  Line charts     — Time series and trends. Keep to 2–4 series max. \
-                    Best for MoM, YTD trends, seasonal patterns.
-  Bar charts      — Categorical comparison. Use grouped bars for multi-metric \
-                    comparison. Use stacked for composition breakdown. \
-                    Use horizontal orientation for long category names or rankings.
-  Composed charts — Mixed storytelling: e.g. revenue bars + margin% line. \
-                    Each series specifies its chartType ('bar', 'line', 'area'). \
-                    Use dual axes only when clearly needed.
-  Pie / donut     — Only for simple share-of-total with 6 or fewer categories. \
-                    Never for comparison or precision. Prefer bar for > 6 categories.
-  KPI scorecard   — Headline metrics. Keep to 3–5 KPIs per card.
-  Scatter         — Correlation and distribution between two metrics.
-  Area            — Cumulative trends, volume over time.
+  Line       — time series, trends, MoM/YTD. Max 4 series.
+  Bar        — categorical comparison, ranking. Grouped for multi-metric, \
+               stacked for composition, horizontal for long labels.
+  Composed   — mixed storytelling: bars + lines, dual axis. \
+               Each series has its own chartType.
+  Pie/Donut  — share-of-total ONLY. Max 6 categories. Prefer bar otherwise.
+  KPI        — headline metrics. 3–5 tiles per card.
+  Scatter    — correlation between two numeric variables.
+  Area       — cumulative trends, volume over time.
 
 Principles:
 • Choose the simplest chart that communicates the message
@@ -222,31 +325,16 @@ Principles:
 • Use colour intentionally — highlight the one thing that matters
 • Maintain consistent chart types across a response or dashboard
 
-── HIGHLIGHTING GUIDELINES ─────────────────────────
-
-• Use config.highlights to emphasise specific categories that are the focus of the insight
-• Use emphasis: "muted" on background/context series (e.g. prior year as muted, current year highlighted)
-• Use referenceLines for targets, benchmarks, or thresholds
-• Do NOT highlight everything — only the key insight
-• Mute non-focus items to guide attention to what matters
-
-── COMPLEXITY CONTROL ──────────────────────────────
-
-• If more than 10 categories, use topN to limit display
-• If more than 4 series, consider splitting into multiple charts instead
-• If labels are long (> 15 chars), use orientation: "horizontal"
-• Never use pie for more than 6 categories
-• Prefer clarity over density — one clear message per chart
-
 ── MULTI-SERIES USAGE ──────────────────────────────
 
-Good multi-series use cases:
+Good:
   • Revenue vs Cost by category (2 grouped bars)
-  • Actual vs Target vs Prior Year (3 series)
-  • Revenue bars + Churn% line (composed chart)
-  • Stacked revenue by segment showing composition
+  • Actual vs Target vs Prior Year (3 series: bright bars + 2 muted lines)
+  • Revenue bars + Churn%% line (composed, dual axis)
+  • Stacked revenue by segment showing composition over time
+  • Current year bars + prior year bars + variance %% line (MoM comparison)
 
-Bad multi-series use cases (avoid these):
+Bad (avoid):
   • 8+ unrelated metrics crammed into one chart
   • Series with vastly different scales without dual axis
   • Stacking percentages (confusing to read)

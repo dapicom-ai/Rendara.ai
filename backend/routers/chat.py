@@ -42,6 +42,9 @@ async def _stream_worker(
     Runs the full LLM stream in the background. Writes each SSE chunk to
     the queue for the client reader. Always completes — even if the client
     disconnects, the stream finishes and messages are persisted.
+
+    If the queue is full (client gone / slow), chunks are silently dropped
+    but the stream continues so persistence still happens.
     """
     try:
         async for chunk in run_chat_stream(conversation_id, message, history, resource_id=resource_id):
@@ -61,24 +64,46 @@ async def _stream_worker(
                 except (json.JSONDecodeError, Exception):
                     pass  # malformed chunk — forward as-is
 
-            await queue.put(chunk)
+            # Non-blocking put: if queue is full (client gone), drop the chunk
+            # but keep iterating so the stream completes and persists
+            try:
+                queue.put_nowait(chunk)
+            except asyncio.QueueFull:
+                pass  # client not consuming — drop SSE event, continue stream
+
     except Exception as exc:
         logger.exception(f"Stream worker error for conversation {conversation_id}: {exc}")
-        # Send error event to client if still connected
-        error_chunk = f'data: {json.dumps({"type": "error", "error_code": "INTERNAL_ERROR", "error_message": "An internal error occurred."})}\n\n'
-        await queue.put(error_chunk)
+        try:
+            queue.put_nowait(
+                f'data: {json.dumps({"type": "error", "error_code": "INTERNAL_ERROR", "error_message": "An internal error occurred."})}\n\n'
+            )
+        except asyncio.QueueFull:
+            pass
     finally:
-        # Signal end of stream
-        await queue.put(None)
+        # Signal end of stream (non-blocking; ok if nobody is listening)
+        try:
+            queue.put_nowait(None)
+        except asyncio.QueueFull:
+            # Force-drain one item to make room for the sentinel
+            try:
+                queue.get_nowait()
+                queue.put_nowait(None)
+            except (asyncio.QueueEmpty, asyncio.QueueFull):
+                pass
 
 
 async def _queue_reader(queue: asyncio.Queue) -> AsyncGenerator[str, None]:
     """Read SSE chunks from the queue until None (end signal)."""
-    while True:
-        chunk = await queue.get()
-        if chunk is None:
-            break
-        yield chunk
+    try:
+        while True:
+            chunk = await queue.get()
+            if chunk is None:
+                break
+            yield chunk
+    except (asyncio.CancelledError, GeneratorExit):
+        # Client disconnected — just stop reading.
+        # The background worker continues independently.
+        pass
 
 
 @router.post("/chat/stream")
@@ -104,7 +129,7 @@ async def chat_stream(request: ChatStreamRequest) -> StreamingResponse:
     ]
 
     # Start the stream worker as a background task
-    queue: asyncio.Queue = asyncio.Queue(maxsize=64)
+    queue: asyncio.Queue = asyncio.Queue(maxsize=128)
     asyncio.create_task(
         _stream_worker(queue, request.conversation_id, request.message, history, resource_id=request.resource_id)
     )

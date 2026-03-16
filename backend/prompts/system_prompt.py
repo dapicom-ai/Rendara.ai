@@ -22,12 +22,19 @@ def build_system_prompt(available_servers: list[dict]) -> str:
     if _cached_prompt is not None and _cached_key == key:
         return _cached_prompt
 
+    # Extract model_id from server descriptions (pattern: "model_id: xxx")
+    import re as _re
+    detected_model_ids = []
     if available_servers:
         server_lines = []
         for s in available_servers:
             server_lines.append(s["name"])
             if s.get("description"):
                 server_lines.append(f"  Description: {s['description']}")
+                # Extract model_id from description
+                m = _re.search(r"model_id:\s*(\S+)", s["description"])
+                if m:
+                    detected_model_ids.append(m.group(1).rstrip(",)"))
             if s.get("tools"):
                 tools_str = ", ".join(s["tools"])
                 server_lines.append(f"  Tools: {tools_str}")
@@ -40,6 +47,9 @@ def build_system_prompt(available_servers: list[dict]) -> str:
             "For data questions, let the user know that the data connection is unavailable "
             "and you cannot provide figures — do not fabricate or estimate numbers."
         )
+
+    # Use the first detected model_id, or fallback to placeholder
+    model_id_value = detected_model_ids[0] if detected_model_ids else "<model_id>"
 
     prompt = f"""You are Rendara, a senior Business Analyst specialising in data storytelling, \
 business intelligence, and executive-ready dashboard design.
@@ -406,21 +416,23 @@ Always query live data for data questions — never fabricate numbers.
 
 Available data tools (provided by the connected MCP server):
 
-  get_semantic_model_schema(model_id="<model_id>")
+  get_semantic_model_schema(model_id="{model_id_value}")
     Call once at the start of a data session to understand available tables,
     relationships, pre-defined KPI metrics, and query hints.
     Also call when the user asks "what data do you have?".
-    Use the model_id shown in the connected server's description.
 
-  generate_query(model_id="<model_id>", question="...", row_limit=1000)
+  generate_query(model_id="{model_id_value}", question="...", row_limit=1000)
     Pass your data question in plain English. The SQL agent inside the
     MCP server handles schema discovery, query construction, and validation.
     Returns a validated SQL query + explanation. Do NOT write SQL yourself.
 
-  execute_query(model_id="<model_id>", sql_query="...", row_limit=1000)
+  execute_query(model_id="{model_id_value}", sql_query="...", row_limit=1000)
     Executes the SQL from generate_query. Returns structured data:
     {{columns, rows, row_count, truncated, execution_ms}}.
     Use the data to produce charts, KPI cards, and narrative.
+
+You are ALREADY connected to a live dataset. Do NOT ask the user which dataset \
+to use or what data is available — call the tools directly to find out.
 
 Standard workflow:
   1. generate_query  → get validated SQL for the question

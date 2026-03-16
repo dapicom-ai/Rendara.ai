@@ -1,8 +1,15 @@
 """
 Chat router — POST /api/chat/stream
+
+The LLM stream runs in a background asyncio task so it continues to
+completion (and persists messages) even if the client disconnects mid-stream.
+The SSE response reads from an asyncio.Queue bridging the two.
 """
 
+import asyncio
 import json
+import logging
+import uuid as _uuid
 from typing import AsyncGenerator, Optional
 
 from fastapi import APIRouter
@@ -11,6 +18,8 @@ from pydantic import BaseModel
 
 import database
 from services.stream_processor import generate_title, run_chat_stream
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -22,32 +31,53 @@ class ChatStreamRequest(BaseModel):
     resource_id: Optional[str] = None  # "dashboard:{uuid}" or "story:{uuid}"
 
 
-async def _filtered_stream(
-    conversation_id: str, message: str, history: list, resource_id: Optional[str] = None
-) -> AsyncGenerator[str, None]:
+async def _stream_worker(
+    queue: asyncio.Queue,
+    conversation_id: str,
+    message: str,
+    history: list,
+    resource_id: Optional[str] = None,
+) -> None:
     """
-    Wraps run_chat_stream to:
-    1. Intercept the internal _persist event (never forward to client).
-    2. Use the _persist payload to save messages to SQLite.
+    Runs the full LLM stream in the background. Writes each SSE chunk to
+    the queue for the client reader. Always completes — even if the client
+    disconnects, the stream finishes and messages are persisted.
     """
-    async for chunk in run_chat_stream(conversation_id, message, history, resource_id=resource_id):
-        # chunk is a raw SSE line like "data: {...}\n\n"
-        if chunk.startswith("data: "):
-            try:
-                payload = json.loads(chunk[6:].strip())
-                if payload.get("type") == "_persist":
-                    # Persist messages silently — do not yield to client
-                    import uuid as _uuid
-                    await database.persist_messages(
-                        conv_id=conversation_id,
-                        user_msg_id=f"umsg_{_uuid.uuid4().hex[:12]}",
-                        user_content=payload.get("user_message", ""),
-                        asst_msg_id=payload.get("message_id", f"amsg_{_uuid.uuid4().hex[:12]}"),
-                        asst_content=payload.get("content_blocks", []),
-                    )
-                    continue
-            except (json.JSONDecodeError, Exception):
-                pass  # malformed or non-JSON chunk — yield as-is
+    try:
+        async for chunk in run_chat_stream(conversation_id, message, history, resource_id=resource_id):
+            # Intercept _persist event — persist to DB, don't forward to client
+            if chunk.startswith("data: "):
+                try:
+                    payload = json.loads(chunk[6:].strip())
+                    if payload.get("type") == "_persist":
+                        await database.persist_messages(
+                            conv_id=conversation_id,
+                            user_msg_id=f"umsg_{_uuid.uuid4().hex[:12]}",
+                            user_content=payload.get("user_message", ""),
+                            asst_msg_id=payload.get("message_id", f"amsg_{_uuid.uuid4().hex[:12]}"),
+                            asst_content=payload.get("content_blocks", []),
+                        )
+                        continue
+                except (json.JSONDecodeError, Exception):
+                    pass  # malformed chunk — forward as-is
+
+            await queue.put(chunk)
+    except Exception as exc:
+        logger.exception(f"Stream worker error for conversation {conversation_id}: {exc}")
+        # Send error event to client if still connected
+        error_chunk = f'data: {json.dumps({"type": "error", "error_code": "INTERNAL_ERROR", "error_message": "An internal error occurred."})}\n\n'
+        await queue.put(error_chunk)
+    finally:
+        # Signal end of stream
+        await queue.put(None)
+
+
+async def _queue_reader(queue: asyncio.Queue) -> AsyncGenerator[str, None]:
+    """Read SSE chunks from the queue until None (end signal)."""
+    while True:
+        chunk = await queue.get()
+        if chunk is None:
+            break
         yield chunk
 
 
@@ -55,8 +85,10 @@ async def _filtered_stream(
 async def chat_stream(request: ChatStreamRequest) -> StreamingResponse:
     """
     SSE streaming endpoint. Returns text/event-stream.
-    Emits: text_delta, tool_call_start, tool_call_result, tool_call_error,
-           viz_block, mermaid_block, message_complete, resource_updated, error events.
+
+    The LLM + tool call loop runs in a background task that always completes,
+    even if the client navigates away. This ensures messages are persisted
+    regardless of client connection state.
     """
     # Ensure conversation exists in DB
     existing = await database.get_conversation(request.conversation_id)
@@ -71,8 +103,14 @@ async def chat_stream(request: ChatStreamRequest) -> StreamingResponse:
         for msg in raw_messages
     ]
 
+    # Start the stream worker as a background task
+    queue: asyncio.Queue = asyncio.Queue(maxsize=64)
+    asyncio.create_task(
+        _stream_worker(queue, request.conversation_id, request.message, history, resource_id=request.resource_id)
+    )
+
     return StreamingResponse(
-        _filtered_stream(request.conversation_id, request.message, history, resource_id=request.resource_id),
+        _queue_reader(queue),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

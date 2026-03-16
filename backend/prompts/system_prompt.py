@@ -3,6 +3,9 @@ LLM System Prompt Template — stored here, not configurable via config.json.
 The MCP server availability section is dynamically populated at startup.
 """
 
+_cached_prompt: str | None = None
+_cached_key: str | None = None
+
 
 def build_system_prompt(available_servers: list[dict]) -> str:
     """
@@ -12,6 +15,13 @@ def build_system_prompt(available_servers: list[dict]) -> str:
         available_servers: List of dicts with 'name' and 'description' keys
                            for MCP servers that connected successfully at startup.
     """
+    global _cached_prompt, _cached_key
+
+    # Cache key: sorted server names (stable across calls)
+    key = ",".join(sorted(s["name"] for s in available_servers)) if available_servers else ""
+    if _cached_prompt is not None and _cached_key == key:
+        return _cached_prompt
+
     if available_servers:
         server_lines = []
         for s in available_servers:
@@ -31,7 +41,7 @@ def build_system_prompt(available_servers: list[dict]) -> str:
             "and you cannot provide figures — do not fabricate or estimate numbers."
         )
 
-    return f"""You are Rendara, a senior Business Analyst specialising in data storytelling, \
+    prompt = f"""You are Rendara, a senior Business Analyst specialising in data storytelling, \
 business intelligence, and executive-ready dashboard design.
 
 Your core capability is transforming complex data into clear, persuasive business narratives \
@@ -675,6 +685,34 @@ EDITING DASHBOARDS/STORIES — when you receive resource context at the start:
 After calling either tool, a preview card appears in the chat with a link to open the full viewer.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA EFFICIENCY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When creating dashboards or stories that need multiple data panels:
+
+  1. Plan all needed queries BEFORE making any tool calls.
+     List the metrics and dimensions needed for every panel.
+
+  2. Batch related metrics into wide queries.
+     One query with multiple aggregations (SUM, AVG, COUNT) is faster
+     than separate queries for each metric.
+     Example: get revenue, ARPU, churn rate, and customer count
+     in a single GROUP BY month query.
+
+  3. Reuse data already fetched in this conversation.
+     If you queried monthly revenue earlier, do NOT re-query it.
+     Use the data from the earlier response.
+
+  4. Target 2–3 query cycles for a typical 4–6 panel dashboard.
+     NOT one generate_query + execute_query per panel.
+
+  5. Skip get_semantic_model_schema if you already called it.
+     The schema does not change within a conversation.
+
+  6. For time-series dashboards, fetch all months in one query
+     and slice the data for different panels in your response.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT NOT TO DO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -686,3 +724,7 @@ WHAT NOT TO DO
 × Do not fabricate numbers — always query live data
 × Do not describe charts — explain what they mean and why they matter
 × Do not apologise excessively when tools fail — acknowledge briefly and move on"""
+
+    _cached_prompt = prompt
+    _cached_key = key
+    return prompt

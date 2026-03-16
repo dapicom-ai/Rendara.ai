@@ -4,11 +4,8 @@ import re
 from pathlib import Path
 
 from langchain_openai import ChatOpenAI
-from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits import SQLDatabaseToolkit
-from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import SystemMessage, HumanMessage
 
-DB_URI = "postgresql+psycopg2://rendara:rendara123@localhost:5432/telco_lakehouse"
 META_FILE = Path(__file__).parent / "demo_semantic_meta.json"
 
 
@@ -66,8 +63,8 @@ The complete schema is provided below — do NOT call any schema discovery tools
 
 INSTRUCTIONS:
 1. Write the SELECT query directly using the schema above.
-2. Call sql_db_query_checker exactly ONCE to validate the SQL.
-3. After validation, output the final SQL on a line starting with exactly:
+2. Double-check your SQL: verify table names, column names, join conditions, and aggregations match the schema.
+3. Output the final SQL on a line starting with exactly:
    SQL: <your_query>
 
 CRITICAL RULES:
@@ -82,73 +79,62 @@ CRITICAL RULES:
 - Include a date range filter in every query."""
 
 
-def build_agent():
+def build_llm():
     """
-    Build and return the compiled LangGraph agent.
+    Build and return a ChatOpenAI instance for direct SQL generation.
 
-    Optimisations vs naive approach:
-    - Schema pre-baked into system prompt → skips sql_db_list_tables + sql_db_schema calls (saves 2 LLM round-trips)
-    - Only sql_db_query_checker tool remains (1 validation call instead of 3+ tool calls)
-    - Separate SQL_AGENT_MODEL env var defaults to haiku (fast, cheap, excellent at SQL)
+    Single LLM call replaces the previous ReAct agent loop (saves 2-3 round-trips).
     """
     model = os.environ.get(
         "SQL_AGENT_MODEL",
         os.environ.get("OPENROUTER_MODEL", "anthropic/claude-haiku-4.5"),
     )
-    llm = ChatOpenAI(
+    return ChatOpenAI(
         model=model,
         api_key=os.environ["OPENROUTER_API_KEY"],
         base_url="https://openrouter.ai/api/v1",
         temperature=0,
+        max_tokens=512,
     )
-    db = SQLDatabase.from_uri(DB_URI)
-    toolkit = SQLDatabaseToolkit(db=db, llm=llm)
-    all_tools = toolkit.get_tools()
-
-    # Keep only the checker — schema discovery tools are no longer needed
-    checker_tools = [t for t in all_tools if t.name == "sql_db_query_checker"]
-
-    return create_react_agent(llm, checker_tools, prompt=SYSTEM_PROMPT)
 
 
-def invoke_generate_query(agent, question: str, row_limit: int = 1000) -> dict:
+def invoke_generate_query(llm, question: str, row_limit: int = 1000) -> dict:
     """
-    Invoke the agent and extract the SQL query from the final message.
+    Invoke the LLM and extract the SQL query from the response.
     Returns: {"sql_query": str, "explanation": str, "tables_used": list[str], "agent_steps": int}
     """
     prompt = f"{question}\n\nLimit results to at most {row_limit} rows."
-    result = agent.invoke({"messages": [("user", prompt)]})
-    messages = result["messages"]
-    agent_steps = len(messages)
+    response = llm.invoke([
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=prompt),
+    ])
+    content = response.content
+    agent_steps = 1
 
     sql_query = ""
     explanation = ""
-    for msg in reversed(messages):
-        content = getattr(msg, "content", "")
-        if isinstance(content, str) and "SQL:" in content:
-            lines = content.splitlines()
-            collecting = False
-            sql_lines = []
-            for line in lines:
-                if line.strip().startswith("SQL:"):
-                    # Start collecting: grab the remainder of this line
-                    remainder = line.split("SQL:", 1)[1].strip()
-                    if remainder:
-                        sql_lines.append(remainder)
-                    collecting = True
-                elif collecting:
-                    # Stop at a blank line that follows the SQL block
-                    if not line.strip() and sql_lines:
-                        break
-                    sql_lines.append(line)
-            sql_query = "\n".join(sql_lines).strip()
-            explanation = content
-            break
+    if isinstance(content, str) and "SQL:" in content:
+        lines = content.splitlines()
+        collecting = False
+        sql_lines = []
+        for line in lines:
+            if line.strip().startswith("SQL:"):
+                # Start collecting: grab the remainder of this line
+                remainder = line.split("SQL:", 1)[1].strip()
+                if remainder:
+                    sql_lines.append(remainder)
+                collecting = True
+            elif collecting:
+                # Stop at a blank line that follows the SQL block
+                if not line.strip() and sql_lines:
+                    break
+                sql_lines.append(line)
+        sql_query = "\n".join(sql_lines).strip()
+        explanation = content
 
     tables_used = list({
         m
-        for msg in messages
-        for m in re.findall(r"\b(dim_\w+|fact_\w+)\b", getattr(msg, "content", "") or "")
+        for m in re.findall(r"\b(dim_\w+|fact_\w+)\b", content or "")
     })
 
     return {
@@ -160,11 +146,11 @@ def invoke_generate_query(agent, question: str, row_limit: int = 1000) -> dict:
 
 
 # Module-level singleton — built once at server startup
-_agent = None
+_llm = None
 
 
-def get_agent():
-    global _agent
-    if _agent is None:
-        _agent = build_agent()
-    return _agent
+def get_llm():
+    global _llm
+    if _llm is None:
+        _llm = build_llm()
+    return _llm

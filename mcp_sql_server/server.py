@@ -2,14 +2,12 @@ import asyncio
 import os
 import time
 
-import asyncpg
 from mcp.server.fastmcp import FastMCP
 
-from agent import get_agent, invoke_generate_query
+from agent import get_llm, invoke_generate_query
+from db_pool import get_pool
 from semantic_meta import load_semantic_schema, merge_with_live_schema
 from safety import validate_select_only, enforce_row_limit, execute_with_timeout
-
-PG_DSN = "postgresql://rendara:rendara123@localhost:5432/telco_lakehouse"
 
 _port = int(os.environ.get("MCP_PORT", "8001"))
 mcp = FastMCP(
@@ -53,9 +51,9 @@ async def generate_query(model_id: str, question: str, row_limit: int = 1000) ->
     Mirror of Power BI Generate Query tool.
     """
     loop = asyncio.get_event_loop()
-    agent = get_agent()
+    llm = get_llm()
     result = await loop.run_in_executor(
-        None, lambda: invoke_generate_query(agent, question, row_limit)
+        None, lambda: invoke_generate_query(llm, question, row_limit)
     )
     if not result.get("sql_query"):
         raise ValueError(
@@ -80,11 +78,9 @@ async def execute_query(
     validate_select_only(sql_query)
     sql_query = enforce_row_limit(sql_query, row_limit)
     start = time.monotonic()
-    conn = await asyncpg.connect(PG_DSN)
-    try:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
         rows = await execute_with_timeout(conn.fetch(sql_query), timeout_seconds)
-    finally:
-        await conn.close()
     columns = list(rows[0].keys()) if rows else []
     data = [[_json_safe(v) for v in row] for row in rows]
     return {

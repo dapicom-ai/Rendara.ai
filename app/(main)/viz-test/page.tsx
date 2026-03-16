@@ -257,9 +257,131 @@ const scatterChart: VizSpec = {
   ],
 };
 
+// ═══════════════════════════════════════════════════════════════
+// INSIGHT HIGHLIGHTING EXAMPLES — how Rendara marks anomalies
+// ═══════════════════════════════════════════════════════════════
+
+// Scenario: Revenue dropped sharply in October — highlight the drop month
+const insightRevenueDrop: VizSpec = {
+  type: "bar",
+  title: "Monthly Revenue — October Drop Highlighted",
+  xKey: "month",
+  yKey: "revenue_sgd",
+  data: [
+    { month: "Apr", revenue_sgd: 56900 },
+    { month: "May", revenue_sgd: 58200 },
+    { month: "Jun", revenue_sgd: 57400 },
+    { month: "Jul", revenue_sgd: 59100 },
+    { month: "Aug", revenue_sgd: 60500 },
+    { month: "Sep", revenue_sgd: 61200 },
+    { month: "Oct", revenue_sgd: 48300 },
+    { month: "Nov", revenue_sgd: 52100 },
+    { month: "Dec", revenue_sgd: 54500 },
+  ],
+  config: {
+    highlights: ["Oct"],
+    formatY: "currency",
+    referenceLines: [{ y: 55000, label: "Avg baseline ($55K)", strokeDasharray: "6 3" }],
+  },
+};
+
+// Scenario: Churn spiked above target — line chart showing the breach
+const insightChurnSpike: VizSpec = {
+  type: "line",
+  title: "Churn Rate — July Spike Above Target",
+  xKey: "month",
+  yKey: "churn_rate",
+  data: [
+    { month: "Jan", churn_rate: 0.65 },
+    { month: "Feb", churn_rate: 0.58 },
+    { month: "Mar", churn_rate: 0.71 },
+    { month: "Apr", churn_rate: 0.62 },
+    { month: "May", churn_rate: 0.54 },
+    { month: "Jun", churn_rate: 0.49 },
+    { month: "Jul", churn_rate: 0.87 },
+    { month: "Aug", churn_rate: 0.72 },
+    { month: "Sep", churn_rate: 0.39 },
+    { month: "Oct", churn_rate: 0.55 },
+    { month: "Nov", churn_rate: 0.50 },
+    { month: "Dec", churn_rate: 0.86 },
+  ],
+  config: {
+    formatY: "percentage",
+    referenceLines: [
+      { y: 0.7, label: "Alert threshold (0.7%)", color: "#EF4444", strokeDasharray: "4 4" },
+    ],
+  },
+};
+
+// Scenario: Actual vs Target vs Prior Year — muted prior year, highlighted current
+const insightActualVsTarget: VizSpec = {
+  type: "composed",
+  title: "Revenue: Actual vs Target vs Prior Year",
+  xKey: "month",
+  yKey: "actual_sgd",
+  data: [
+    { month: "Jul", actual_sgd: 48200, target_sgd: 52000, prior_year_sgd: 45100 },
+    { month: "Aug", actual_sgd: 51400, target_sgd: 52000, prior_year_sgd: 46800 },
+    { month: "Sep", actual_sgd: 49800, target_sgd: 52000, prior_year_sgd: 47200 },
+    { month: "Oct", actual_sgd: 42300, target_sgd: 52000, prior_year_sgd: 48500 },
+    { month: "Nov", actual_sgd: 53100, target_sgd: 52000, prior_year_sgd: 49100 },
+    { month: "Dec", actual_sgd: 54500, target_sgd: 52000, prior_year_sgd: 50200 },
+  ],
+  config: {
+    series: [
+      { key: "actual_sgd", label: "Actual Revenue", chartType: "bar", format: "currency", emphasis: "highlight" },
+      { key: "target_sgd", label: "Target", chartType: "line", format: "currency", emphasis: "muted", yAxisId: "left" },
+      { key: "prior_year_sgd", label: "Prior Year", chartType: "line", format: "currency", emphasis: "muted", yAxisId: "left" },
+    ],
+    formatY: "currency",
+    legendPosition: "top",
+  },
+};
+
+// Scenario: One segment is underperforming — highlight laggard, mute the rest
+const insightLaggardSegment: VizSpec = {
+  type: "bar",
+  title: "ARPU by Segment — Senior Segment Lagging",
+  xKey: "segment",
+  yKey: "arpu_sgd",
+  data: [
+    { segment: "Youth", arpu_sgd: 24.80 },
+    { segment: "Young Adult", arpu_sgd: 21.30 },
+    { segment: "Adult", arpu_sgd: 19.10 },
+    { segment: "Senior", arpu_sgd: 12.40 },
+  ],
+  config: {
+    highlights: ["Senior"],
+    formatY: "currency",
+    sort: "desc",
+    referenceLines: [{ y: 18.0, label: "Company avg ($18)", strokeDasharray: "6 3" }],
+  },
+};
+
+// Scenario: Top plans by revenue with leader highlighted
+const insightTopPlanLeader: VizSpec = {
+  type: "bar",
+  title: "Revenue by Plan — 5G Starter Dominates",
+  xKey: "plan",
+  yKey: "revenue_sgd",
+  data: [
+    { plan: "5G Starter", revenue_sgd: 18200 },
+    { plan: "SIM Plus", revenue_sgd: 12400 },
+    { plan: "SIM Max", revenue_sgd: 10800 },
+    { plan: "Combo Plus", revenue_sgd: 7600 },
+    { plan: "Youth Unlimited", revenue_sgd: 5500 },
+  ],
+  config: {
+    highlights: ["5G Starter"],
+    orientation: "horizontal",
+    sort: "desc",
+    formatY: "currency",
+  },
+};
+
 // ── All fixtures in display order ──
 
-const allFixtures: { name: string; spec: VizSpec; height?: number }[] = [
+const chartVariations: { name: string; spec: VizSpec; height?: number }[] = [
   { name: "1. Grouped Multi-Series Bar", spec: groupedMultiSeriesBar },
   { name: "2. Stacked Bar Chart", spec: stackedBarChart },
   { name: "3. Multi-Line Time Series (3 series, dual axis)", spec: multiLineTimeSeries },
@@ -274,17 +396,76 @@ const allFixtures: { name: string; spec: VizSpec; height?: number }[] = [
   { name: "12. Scatter Chart", spec: scatterChart },
 ];
 
+const insightExamples: { name: string; description: string; spec: VizSpec; height?: number }[] = [
+  {
+    name: "Revenue Drop Detection",
+    description: "October revenue dropped sharply below baseline. The drop month is highlighted in full color while other months are muted. A dashed reference line shows the average baseline for context.",
+    spec: insightRevenueDrop,
+  },
+  {
+    name: "Churn Spike Above Threshold",
+    description: "July churn spiked above the 0.7% alert threshold. A red dashed reference line marks the threshold so the spike is immediately visible.",
+    spec: insightChurnSpike,
+  },
+  {
+    name: "Actual vs Target vs Prior Year",
+    description: "Current revenue (bright bars) compared against target and prior year (both muted lines). October miss is immediately visible. This composed chart uses emphasis levels to focus attention on what matters.",
+    spec: insightActualVsTarget,
+  },
+  {
+    name: "Underperforming Segment",
+    description: "Senior segment ARPU lags all others and falls below the company average (dashed reference line). The laggard is highlighted while performing segments are muted.",
+    spec: insightLaggardSegment,
+  },
+  {
+    name: "Market Leader Dominance",
+    description: "5G Starter generates 33% of total plan revenue. Highlighted in full color with a horizontal layout for readability. Other plans shown muted for context.",
+    spec: insightTopPlanLeader, height: 240,
+  },
+];
+
 export default function VizTestPage() {
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-10 h-full overflow-y-auto">
+    <div className="p-6 max-w-6xl mx-auto space-y-10 h-full overflow-y-auto pb-20">
+      {/* ── INSIGHT HIGHLIGHTING ── */}
       <div>
-        <h1 className="text-2xl font-bold text-white mb-1">Visualization Test Page</h1>
+        <h1 className="text-2xl font-bold text-white mb-1">Insight Highlighting</h1>
         <p className="text-sm text-muted-foreground">
-          All chart variations rendered with mock data. Check for rendering issues, console errors, and visual quality.
+          How Rendara marks anomalies, drops, spikes, laggards, and leaders inside chat responses,
+          dashboards, and stories. The AI agent uses these techniques automatically when it detects insights in the data.
         </p>
       </div>
 
-      {allFixtures.map(({ name, spec, height }) => (
+      {insightExamples.map(({ name, description, spec, height }) => (
+        <section key={name} className="space-y-3">
+          <div>
+            <h2 className="text-base font-semibold text-accent">{name}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          </div>
+          <div className="border border-border rounded-2xl p-4 bg-surface/30">
+            <VizChartBlock
+              spec={spec}
+              status="complete"
+              blockId={`insight-${name}`}
+              inlineHeight={height ?? 280}
+              showPinButton={false}
+              readOnly
+              allowExpand={false}
+            />
+          </div>
+        </section>
+      ))}
+
+      {/* ── CHART VARIATIONS ── */}
+      <div className="pt-8 border-t border-border">
+        <h1 className="text-2xl font-bold text-white mb-1">Chart Type Variations</h1>
+        <p className="text-sm text-muted-foreground">
+          All supported chart types rendered with mock data. Includes multi-series, stacking,
+          horizontal orientation, reference lines, and backward-compatible simple specs.
+        </p>
+      </div>
+
+      {chartVariations.map(({ name, spec, height }) => (
         <section key={name} className="space-y-2">
           <h2 className="text-base font-semibold text-accent">{name}</h2>
           <div className="border border-border rounded-2xl p-4 bg-surface/30">

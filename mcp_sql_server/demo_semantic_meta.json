@@ -1,7 +1,7 @@
 {
   "models": [{
-    "model_id": "demo_data",
-    "model_name": "Demo Prepaid Analytics",
+    "model_id": "telco_prepaid_demo",
+    "model_name": "Telco-Prepaid-Demo",
     "entities": [
       {
         "table_name": "dim_customer",
@@ -293,8 +293,36 @@
       {"name": "At-Risk Revenue (SGD)", "expression": "SUM(f.total_monthly_revenue_sgd) WHERE cp.churn_risk_band IN ('high', 'critical')"},
       {"name": "Churn Risk Band Distribution", "expression": "COUNT(*) GROUP BY churn_risk_band"},
       {"name": "Campaign Conversion Rate %", "expression": "100.0 * SUM(customer_accepted_offer::int) / COUNT(enrollment_id)"},
-      {"name": "Avg Days Between Recharges", "expression": "AVG(days_since_last_recharge) across active customers"}
+      {"name": "Avg Days Between Recharges", "expression": "AVG(days_since_last_recharge) across active customers"},
+
+      {"name": "MoM Revenue Change %", "expression": "100.0 * (SUM(f.total_monthly_revenue_sgd) - LAG(SUM(f.total_monthly_revenue_sgd)) OVER (ORDER BY f.month_start_date)) / NULLIF(LAG(SUM(f.total_monthly_revenue_sgd)) OVER (ORDER BY f.month_start_date), 0)", "category": "Revenue Variance & Comparison"},
+      {"name": "YoY Revenue Variance %", "expression": "100.0 * (curr.revenue - prior.revenue) / NULLIF(prior.revenue, 0) — join same month_number across consecutive years", "category": "Revenue Variance & Comparison"},
+      {"name": "Revenue per Plan (SGD)", "expression": "SUM(f.total_monthly_revenue_sgd) / COUNT(DISTINCT f.plan_id)", "category": "Revenue Variance & Comparison"},
+      {"name": "Revenue Concentration Index %", "expression": "100.0 * SUM(CASE WHEN p.plan_name IN (SELECT plan_name FROM top3_plans) THEN f.total_monthly_revenue_sgd ELSE 0 END) / NULLIF(SUM(f.total_monthly_revenue_sgd), 0) — top 3 plans by revenue share", "category": "Revenue Variance & Comparison"},
+      {"name": "Overage Revenue Share %", "expression": "100.0 * SUM(f.overage_revenue_sgd) / NULLIF(SUM(f.total_monthly_revenue_sgd), 0)", "category": "Revenue Variance & Comparison"},
+
+      {"name": "New Activation Rate %", "expression": "100.0 * COUNT(DISTINCT CASE WHEN c.registration_date >= f.month_start_date AND c.registration_date < f.month_start_date + INTERVAL '1 month' THEN c.customer_id END)::numeric / NULLIF(COUNT(DISTINCT f.customer_id), 0)", "category": "Customer Lifecycle"},
+      {"name": "Gross Adds", "expression": "COUNT(DISTINCT CASE WHEN c.registration_date >= f.month_start_date AND c.registration_date < f.month_start_date + INTERVAL '1 month' THEN c.customer_id END)", "category": "Customer Lifecycle"},
+      {"name": "Net Revenue per Churned Customer (SGD)", "expression": "SUM(CASE WHEN f.customer_churned_this_month THEN f.total_monthly_revenue_sgd ELSE 0 END)::numeric / NULLIF(SUM(f.customer_churned_this_month::int), 0)", "category": "Customer Lifecycle"},
+      {"name": "Average Customer Tenure (months)", "expression": "AVG(c.tenure_years * 12)", "category": "Customer Lifecycle"},
+      {"name": "Customer Base Growth Rate %", "expression": "100.0 * (COUNT(DISTINCT f.customer_id) - LAG(COUNT(DISTINCT f.customer_id)) OVER (ORDER BY f.month_start_date))::numeric / NULLIF(LAG(COUNT(DISTINCT f.customer_id)) OVER (ORDER BY f.month_start_date), 0)", "category": "Customer Lifecycle"},
+
+      {"name": "5G Adoption Rate %", "expression": "100.0 * COUNT(DISTINCT CASE WHEN p.is_5g_plan THEN f.customer_id END)::numeric / NULLIF(COUNT(DISTINCT f.customer_id), 0)", "category": "Engagement & Usage"},
+      {"name": "App Engagement Rate %", "expression": "100.0 * COUNT(DISTINCT CASE WHEN f.my_operator_app_launches >= 1 THEN f.customer_id END)::numeric / NULLIF(COUNT(DISTINCT f.customer_id), 0)", "category": "Engagement & Usage"},
+      {"name": "Avg Data per Session (MB)", "expression": "SUM(u.total_data_used_mb)::numeric / NULLIF(SUM(u.number_of_sessions), 0)", "category": "Engagement & Usage"},
+      {"name": "Peak Hour Concentration %", "expression": "100.0 * COUNT(CASE WHEN u.peak_usage_hour BETWEEN 18 AND 22 THEN 1 END)::numeric / NULLIF(COUNT(*), 0)", "category": "Engagement & Usage"},
+      {"name": "Digital Channel Share %", "expression": "100.0 * COUNT(CASE WHEN ch.is_digital THEN 1 END)::numeric / NULLIF(COUNT(r.transaction_id), 0)", "category": "Engagement & Usage"},
+
+      {"name": "Campaign ROI", "expression": "SUM(ce.incremental_revenue_sgd) / NULLIF(SUM(cam.estimated_cost_sgd)::numeric / NULLIF(COUNT(DISTINCT cam.campaign_id), 0) * COUNT(DISTINCT cam.campaign_id), 0)", "category": "Campaign Effectiveness"},
+      {"name": "Offer Acceptance Rate %", "expression": "100.0 * SUM(ce.customer_accepted_offer::int) / NULLIF(COUNT(ce.enrollment_id), 0)", "category": "Campaign Effectiveness"},
+      {"name": "Incremental ARPU Lift (SGD)", "expression": "AVG(CASE WHEN ce.customer_accepted_offer THEN ce.incremental_revenue_sgd END)", "category": "Campaign Effectiveness"},
+      {"name": "Win-Back Success Rate %", "expression": "100.0 * COUNT(DISTINCT CASE WHEN cam.campaign_type = 'Win-Back' AND ce.customer_accepted_offer AND c.tenure_years * 12 >= 3 THEN ce.customer_id END)::numeric / NULLIF(COUNT(DISTINCT CASE WHEN cam.campaign_type = 'Win-Back' AND ce.customer_accepted_offer THEN ce.customer_id END), 0)", "category": "Campaign Effectiveness"},
+
+      {"name": "High-Risk Customer Share %", "expression": "100.0 * COUNT(DISTINCT CASE WHEN cp.churn_risk_band IN ('high', 'critical') THEN cp.customer_id END)::numeric / NULLIF(COUNT(DISTINCT cp.customer_id), 0)", "category": "Churn Intelligence"},
+      {"name": "Predicted Churn Revenue Exposure (SGD)", "expression": "SUM(CASE WHEN cp.churn_risk_band IN ('high', 'critical') THEN f.total_monthly_revenue_sgd ELSE 0 END)", "category": "Churn Intelligence"},
+      {"name": "Churn-to-Activation Ratio", "expression": "SUM(f.customer_churned_this_month::int)::numeric / NULLIF(COUNT(DISTINCT CASE WHEN c.registration_date >= f.month_start_date AND c.registration_date < f.month_start_date + INTERVAL '1 month' THEN c.customer_id END), 0)", "category": "Churn Intelligence"},
+      {"name": "Avg Churn Probability by Segment", "expression": "AVG(cp.churn_probability_score) grouped by c.customer_segment", "category": "Churn Intelligence"}
     ],
-    "ai_instructions": "Star schema — join fact tables to dimensions via integer _id foreign keys (customer_id, plan_id, channel_id, campaign_id). Use dim_date via date column joins (month_start_date, usage_date, transaction_date, prediction_month_date to dim_date.calendar_date). Use fact_monthly_customer_metrics for monthly KPIs (ARPU, churn, data usage). The churn column is customer_churned_this_month (not churned_this_month). The revenue column is total_monthly_revenue_sgd (not monthly_revenue_sgd). Filter actuals: is_future_prediction = false (Jan–Dec 2025). Filter forecasts: is_future_prediction = true (Jan–Jun 2026). Cast to ::numeric before dividing to avoid integer truncation. Use LAG() window functions for MoM variance. For YTD, filter WHERE EXTRACT(YEAR FROM d.calendar_date) = year. Always alias tables: f = fact table, c = dim_customer, d = dim_date, p = dim_plan, ch = dim_channel, cp = fact_churn_prediction. Include a date filter in every query."
+    "ai_instructions": "Star schema — join fact tables to dimensions via integer _id foreign keys (customer_id, plan_id, channel_id, campaign_id). Use dim_date via date column joins (month_start_date, usage_date, transaction_date, prediction_month_date to dim_date.calendar_date). Use fact_monthly_customer_metrics for monthly KPIs (ARPU, churn, data usage). The churn column is customer_churned_this_month (not churned_this_month). The revenue column is total_monthly_revenue_sgd (not monthly_revenue_sgd). Filter actuals: is_future_prediction = false (Jan–Dec 2025). Filter forecasts: is_future_prediction = true (Jan–Jun 2026). Cast to ::numeric before dividing to avoid integer truncation. Use LAG() window functions for MoM variance. For YTD, filter WHERE EXTRACT(YEAR FROM d.calendar_date) = year. Always alias tables: f = fact table, c = dim_customer, d = dim_date, p = dim_plan, ch = dim_channel, cp = fact_churn_prediction, r = fact_recharge_transaction, u = fact_daily_data_usage, ce = fact_campaign_enrollment, cam = dim_campaign. Include a date filter in every query.\n\nKNOWN DATA ANOMALIES (intentional, for analytics storytelling):\n- October 2025: Revenue drops ~15% due to a system migration outage (3-day billing gap)\n- July 2025: Churn spikes to 0.87% — competitor launched aggressive promo\n- Q4 2025: 5G plan adoption accelerates sharply after network expansion in Sep\n- February 2025: Recharge frequency spikes during Chinese New Year campaign\n- November 2025: Senior segment shows sudden ARPU increase — upsell campaign effect\n- September 2025: Data utilisation drops temporarily — content streaming partner outage\n\nWhen narrating analytics results, reference these anomalies as business stories to explain unexpected patterns. For example, if revenue dips in October 2025, explain the system migration outage rather than treating it as unexplained variance."
   }]
 }

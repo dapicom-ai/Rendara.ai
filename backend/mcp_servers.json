@@ -1,8 +1,8 @@
 [
   {
-    "name": "SQL Analytics (Demo)",
+    "name": "Telco-Prepaid-Demo",
     "type": "sse",
     "endpoint": "http://localhost:8001/sse",
-    "description": "Demo prepaid data warehouse (model_id: demo_data) — star schema with customer, plan, recharge, usage, churn prediction, and campaign tables"
+    "description": "Telco-Prepaid-Demo data warehouse (model_id: telco_prepaid_demo) — star schema with customer, plan, recharge, usage, churn prediction, and campaign tables"
   }
 ]
